@@ -7,6 +7,8 @@ require("dotenv").config();
 const pool = require("./config/db");
 const registerTickerSockets = require("./sockets/tickerSocket");
 
+const directoryRoutes = require("./routes/directoryRoutes");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -33,6 +35,8 @@ registerTickerSockets(io);
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+app.use("/api", directoryRoutes);
 
 // Health Check Route
 app.get("/api/health", async (req, res) => {

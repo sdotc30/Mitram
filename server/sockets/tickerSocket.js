@@ -7,6 +7,9 @@ module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log(`⚡ Client connected: ${socket.id}`);
 
+    // Track session ID linked to this specific socket connection
+    let currentSessionId = null;
+
     // --- 0. FETCH USER PROFILE / BALANCE ---
     socket.on("get_user_profile", async (data) => {
       const userId = parseInt(data.userId || 1, 10);
@@ -67,6 +70,13 @@ module.exports = (io) => {
           [userId, consultantId, data.categoryUsed || "General"],
         );
         const sessionId = sessionRes.rows[0].id;
+        currentSessionId = sessionId;
+
+        // CRITICAL FIX: Clear any existing timer for this sessionId to prevent duplicate intervals
+        if (activeTimers.has(sessionId)) {
+          clearInterval(activeTimers.get(sessionId));
+          activeTimers.delete(sessionId);
+        }
 
         // Join room for target updates
         socket.join(`session_${sessionId}`);
@@ -78,8 +88,8 @@ module.exports = (io) => {
           initialBalance: balance,
         });
 
-        // Start Ticker (10 seconds for dev, change to 60000 for 1 min)
-        const TICKER_MS = 10000;
+        // Set interval timer (Change 60000 for standard 1-minute production rate)
+        const TICKER_MS = 60000;
 
         const intervalId = setInterval(async () => {
           try {
@@ -110,8 +120,10 @@ module.exports = (io) => {
               });
             } else {
               // Insufficient balance -> Terminate
-              clearInterval(activeTimers.get(sessionId));
-              activeTimers.delete(sessionId);
+              if (activeTimers.has(sessionId)) {
+                clearInterval(activeTimers.get(sessionId));
+                activeTimers.delete(sessionId);
+              }
               await pool.query(
                 "UPDATE sessions SET status = 'COMPLETED', end_time = CURRENT_TIMESTAMP WHERE id = $1",
                 [sessionId],
@@ -156,8 +168,13 @@ module.exports = (io) => {
       }
     });
 
+    // Cleanup interval if socket disconnects unexpectedly
     socket.on("disconnect", () => {
       console.log(`❌ Client disconnected: ${socket.id}`);
+      if (currentSessionId && activeTimers.has(currentSessionId)) {
+        clearInterval(activeTimers.get(currentSessionId));
+        activeTimers.delete(currentSessionId);
+      }
     });
   });
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { socket } from "./socket";
+import "./App.css";
 import {
   Wallet,
   Clock,
@@ -9,62 +10,121 @@ import {
   Sparkles,
   ShieldCheck,
   Star,
-  Award,
   MessageCircle,
   Lock,
+  ArrowRight,
+  Heart,
+  UserCheck,
+  Calendar,
+  Video,
+  X,
 } from "lucide-react";
 
 export default function App() {
+  // Navigation State: 'landing' | 'session'
+  const [currentView, setCurrentView] = useState("landing");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedConsultant, setSelectedConsultant] = useState(null);
+
+  // Directory Data States
+  const [consultants, setConsultants] = useState([]);
+  const [loadingConsultants, setLoadingConsultants] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Socket & Session States
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [sessionId, setSessionId] = useState(null);
   const [walletBalance, setWalletBalance] = useState(0.0);
   const [sessionActive, setSessionActive] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
 
+  // Timer & Chat
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const timerRef = useRef(null);
-
   const [warningMsg, setWarningMsg] = useState("");
   const [messages, setMessages] = useState([]);
   const [inputMsg, setInputMsg] = useState("");
   const chatBottomRef = useRef(null);
 
-  // Auto-scroll chat
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  // Categories matching your design layout
+  const categoryCards = [
+    {
+      slug: "normal",
+      name: "Normal Consultation",
+      tagline:
+        "A safe space to talk, seek advice and get clarity on life's everyday questions.",
+      btnText: "Start a Conversation",
+      icon: <MessageCircle size={24} color="#D97706" />,
+    },
+    {
+      slug: "vedic",
+      name: "Vedic Consultation",
+      tagline:
+        "Discover timeless wisdom from Vedic knowledge to find balance, purpose and direction.",
+      btnText: "Explore Vedic Guidance",
+      icon: (
+        <span
+          style={{ fontSize: "24px", fontWeight: "bold", color: "#D97706" }}
+        >
+          ॐ
+        </span>
+      ),
+    },
+    {
+      slug: "astro",
+      name: "Astro Consultation",
+      tagline:
+        "Get personalised astrological insights to understand your strengths, challenges and what lies ahead.",
+      btnText: "View Astro Services",
+      icon: <Sparkles size={24} color="#D97706" />,
+    },
+    {
+      slug: "listening",
+      name: "No-Judgement Zone",
+      tagline:
+        "Express yourself without fear. Compassionate listeners ready to support you unconditionally.",
+      btnText: "Enter Safe Space",
+      icon: <Heart size={24} color="#D97706" />,
+    },
+  ];
 
-  // Socket Event Listeners
+  // Auto-scroll chat window
+  useEffect(() => {
+    if (currentView === "session") {
+      chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, currentView]);
+
+  // Socket setup
   useEffect(() => {
     function onConnect() {
-      console.log("✅ Socket Connected! ID:", socket.id);
       setIsConnected(true);
-      // Fetch actual wallet balance from DB on connect
       socket.emit("get_user_profile", { userId: 1 });
     }
 
     function onDisconnect() {
-      console.log("❌ Socket Disconnected");
       setIsConnected(false);
     }
 
     function onUserProfile(data) {
-      console.log("👤 User Profile Loaded:", data);
       setWalletBalance(parseFloat(data.walletBalance));
     }
 
     function onSessionStarted(data) {
-      console.log("🚀 Session Started:", data);
+      setIsStarting(false);
       setSessionId(data.sessionId);
       setWalletBalance(parseFloat(data.initialBalance));
       setSessionActive(true);
       setSecondsElapsed(0);
       setWarningMsg("");
+      setCurrentView("session");
+      setIsModalOpen(false);
 
       setMessages([
         {
           id: 1,
           sender: "system",
-          text: `Consultation Live. Rate: ₹${data.rate}/min.`,
+          text: `Consultation Live with ${selectedConsultant?.name || "Expert"}. Rate: ₹${data.rate}/min.`,
           time: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -73,7 +133,7 @@ export default function App() {
         {
           id: 2,
           sender: "expert",
-          text: "Namaste! I am Pandit Rajesh Sharma. Ask your question or share your birth details.",
+          text: `Namaste! I am ${selectedConsultant?.name || "your consultant"}. How can I guide you today?`,
           time: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -81,7 +141,6 @@ export default function App() {
         },
       ]);
 
-      // Start front-end timer
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         setSecondsElapsed((prev) => prev + 1);
@@ -89,7 +148,6 @@ export default function App() {
     }
 
     function onWalletUpdate(data) {
-      console.log("💰 Wallet Updated:", data);
       setWalletBalance(parseFloat(data.remainingBalance));
       setMessages((prev) => [
         ...prev,
@@ -106,13 +164,11 @@ export default function App() {
     }
 
     function onForceDisconnect(data) {
-      console.log("🛑 Forced Disconnect:", data);
       stopSessionUI();
       setWarningMsg(data.reason);
     }
 
-    function onSessionEnded(data) {
-      console.log("🏁 Session Ended:", data);
+    function onSessionEnded() {
       stopSessionUI();
       setMessages((prev) => [
         ...prev,
@@ -129,10 +185,10 @@ export default function App() {
     }
 
     function onError(data) {
+      setIsStarting(false);
       alert(`Session Error: ${data.message}`);
     }
 
-    // Attach Listeners
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("user_profile", onUserProfile);
@@ -142,10 +198,7 @@ export default function App() {
     socket.on("session_ended", onSessionEnded);
     socket.on("session_error", onError);
 
-    // If socket is already connected when component mounts
-    if (socket.connected) {
-      onConnect();
-    }
+    if (socket.connected) onConnect();
 
     return () => {
       socket.off("connect", onConnect);
@@ -158,30 +211,46 @@ export default function App() {
       socket.off("session_error", onError);
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [selectedConsultant]);
 
-  const stopSessionUI = () => {
-    setSessionActive(false);
-    if (timerRef.current) clearInterval(timerRef.current);
+  // Fetch consultants filtered by category
+  const openCategoryModal = async (cat) => {
+    setSelectedCategory(cat);
+    setIsModalOpen(true);
+    setLoadingConsultants(true);
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/consultants?category=${cat.slug}`,
+      );
+      const data = await res.json();
+      setConsultants(data);
+    } catch (err) {
+      console.error("Failed to load consultants:", err);
+    } finally {
+      setLoadingConsultants(false);
+    }
   };
 
-  // Button Action: Start
-  const handleStartSession = () => {
-    console.log("🔴 CLICKED: Start Session Button");
-    if (!socket.connected) {
-      alert("Socket is NOT connected to server at http://localhost:5000");
-      return;
-    }
+  const handleStartConsultation = (consultant) => {
+    if (isStarting || sessionActive) return;
+    setSelectedConsultant(consultant);
+    setIsStarting(true);
+
     socket.emit("start_session", {
       userId: 1,
-      consultantId: 1,
-      categoryUsed: "Astrology",
+      consultantId: consultant.id,
+      categoryUsed: selectedCategory?.name || "General",
     });
   };
 
-  // Button Action: End
+  const stopSessionUI = () => {
+    setSessionActive(false);
+    setIsStarting(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
   const handleEndSession = () => {
-    console.log("🔴 CLICKED: End Session Button");
     if (sessionId) {
       socket.emit("end_session", { sessionId });
     } else {
@@ -189,7 +258,6 @@ export default function App() {
     }
   };
 
-  // Send Message Action
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!inputMsg.trim() || !sessionActive) return;
@@ -215,397 +283,347 @@ export default function App() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  return (
-    <div style={styles.appContainer}>
-      <header style={styles.navBar}>
-        <div style={styles.navLeft}>
-          <div style={styles.logoIcon}>
-            <Sparkles size={20} color="#F59E0B" />
-          </div>
-          <div>
-            <div style={styles.brandName}>Mitram</div>
-            <div style={styles.brandSub}>Vedic Advice</div>
-          </div>
-        </div>
-
-        <div style={styles.timerPill(sessionActive)}>
-          <Clock size={16} color={sessionActive ? "#F59E0B" : "#64748B"} />
-          <span style={styles.timerPillText}>{formatTime(secondsElapsed)}</span>
-        </div>
-
-        <div style={styles.navRight}>
-          <div style={styles.walletWidget}>
-            <Wallet size={16} color="#10B981" />
-            <span>₹{walletBalance.toFixed(2)}</span>
-          </div>
-          <div style={styles.statusBadge(isConnected)}>
-            {isConnected ? "Connected" : "Disconnected"}
-          </div>
-        </div>
-      </header>
-
-      <main style={styles.mainGrid}>
-        <aside style={styles.consultantCard}>
-          <div style={styles.avatarHeader}>
-            <div style={styles.avatarRing}>
-              <div style={styles.avatarInner}>P</div>
+  // --- UI RENDER: ACTIVE CONSULTATION SESSION ---
+  if (currentView === "session") {
+    return (
+      <div className="app-container">
+        <header className="nav-bar">
+          <div className="nav-left" onClick={() => setCurrentView("landing")}>
+            <div className="logo-icon">
+              <Sparkles size={20} color="#F59E0B" />
             </div>
-            <div style={styles.badgeRow}>
-              <span style={styles.badgePill}>
-                <Star size={12} color="#F59E0B" fill="#F59E0B" /> 4.9
+            <div>
+              <div className="brand-name">Mitram</div>
+              <div className="brand-sub">Guidance Platform</div>
+            </div>
+          </div>
+
+          <div className={`timer-pill ${sessionActive ? "active" : ""}`}>
+            <Clock size={16} color={sessionActive ? "#F59E0B" : "#64748B"} />
+            <span className="timer-pill-text">
+              {formatTime(secondsElapsed)}
+            </span>
+          </div>
+
+          <div className="nav-right">
+            <div className="wallet-widget">
+              <Wallet size={16} color="#10B981" />
+              <span>₹{walletBalance.toFixed(2)}</span>
+            </div>
+            <button
+              onClick={() => setCurrentView("landing")}
+              className="btn-nav-back"
+            >
+              Exit Room
+            </button>
+          </div>
+        </header>
+
+        <main className="main-grid">
+          <aside className="consultant-card-sidebar">
+            <div className="avatar-header">
+              <div className="avatar-ring">
+                <div className="avatar-inner">
+                  {selectedConsultant?.name ? selectedConsultant.name[0] : "P"}
+                </div>
+              </div>
+              <span className="badge-pill">
+                <Star size={12} color="#F59E0B" fill="#F59E0B" />{" "}
+                {selectedConsultant?.rating || "4.9"}
               </span>
             </div>
-          </div>
 
-          <h2 style={styles.consultantTitle}>Pandit Rajesh Sharma</h2>
-          <p style={styles.consultantSub}>Vedic Astrology Specialist</p>
+            <h2 className="consultant-title">
+              {selectedConsultant?.name || "Pandit Rajesh Sharma"}
+            </h2>
+            <p className="consultant-sub">
+              {selectedConsultant?.bio || "Vedic Astrology Specialist"}
+            </p>
 
-          <div style={styles.rateCard}>
-            <div>
-              <div style={styles.rateLabel}>Per Minute Rate</div>
-              <div style={styles.rateValue}>₹15.00 / min</div>
+            <div className="rate-card">
+              <div>
+                <div className="rate-label">Per Minute Rate</div>
+                <div className="rate-value">
+                  ₹
+                  {parseFloat(
+                    selectedConsultant?.per_minute_rate || 15,
+                  ).toFixed(2)}{" "}
+                  / min
+                </div>
+              </div>
+              <ShieldCheck size={24} color="#10B981" />
             </div>
-            <ShieldCheck size={24} color="#10B981" />
-          </div>
 
-          {!sessionActive ? (
-            <button onClick={handleStartSession} style={styles.btnStart}>
-              <MessageCircle size={18} /> Start Session Now
-            </button>
-          ) : (
-            <button onClick={handleEndSession} style={styles.btnEnd}>
-              <PhoneOff size={18} /> End Consultation
-            </button>
-          )}
+            {sessionActive && (
+              <button onClick={handleEndSession} className="btn-end">
+                <PhoneOff size={18} /> End Consultation
+              </button>
+            )}
 
-          <div style={styles.securityBox}>
-            <Lock size={12} color="#64748B" /> 256-bit Encrypted Private Session
-          </div>
-        </aside>
-
-        <section style={styles.chatSection}>
-          {warningMsg && (
-            <div style={styles.warningAlert}>
-              <AlertTriangle size={18} /> {warningMsg}
+            <div className="security-box">
+              <Lock size={12} color="#64748B" /> 256-bit Encrypted Private
+              Session
             </div>
-          )}
+          </aside>
 
-          <div style={styles.chatStream}>
-            {!sessionActive && messages.length === 0 && (
-              <div style={styles.emptyState}>
-                <Sparkles
-                  size={48}
-                  color="#6366F1"
-                  style={{ marginBottom: "16px" }}
-                />
-                <h3>Ready to connect</h3>
-                <p>Click "Start Session Now" on the left to begin.</p>
+          <section className="chat-section">
+            {warningMsg && (
+              <div className="warning-alert">
+                <AlertTriangle size={18} /> {warningMsg}
               </div>
             )}
 
-            {messages.map((m) => {
-              if (m.sender === "system") {
+            <div className="chat-stream">
+              {messages.map((m) => {
+                if (m.sender === "system") {
+                  return (
+                    <div key={m.id} className="system-message">
+                      <span>{m.text}</span>
+                      <small className="time-tag">{m.time}</small>
+                    </div>
+                  );
+                }
+
+                const isUser = m.sender === "user";
                 return (
-                  <div key={m.id} style={styles.systemMessage}>
-                    <span>{m.text}</span>
-                    <small style={styles.timeTag}>{m.time}</small>
+                  <div
+                    key={m.id}
+                    className={isUser ? "user-row" : "expert-row"}
+                  >
+                    <div className={isUser ? "user-bubble" : "expert-bubble"}>
+                      <div>{m.text}</div>
+                      <div className="time-tag">{m.time}</div>
+                    </div>
                   </div>
                 );
-              }
+              })}
+              <div ref={chatBottomRef} />
+            </div>
 
-              const isUser = m.sender === "user";
-              return (
-                <div
-                  key={m.id}
-                  style={isUser ? styles.userRow : styles.expertRow}
-                >
-                  <div style={isUser ? styles.userBubble : styles.expertBubble}>
-                    <div>{m.text}</div>
-                    <div style={styles.timeTag}>{m.time}</div>
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={chatBottomRef} />
+            <form onSubmit={handleSendMessage} className="input-bar">
+              <input
+                type="text"
+                placeholder={
+                  sessionActive
+                    ? "Type your message..."
+                    : "Session completed..."
+                }
+                disabled={!sessionActive}
+                value={inputMsg}
+                onChange={(e) => setInputMsg(e.target.value)}
+                className="text-input"
+              />
+              <button
+                type="submit"
+                disabled={!sessionActive || !inputMsg.trim()}
+                className={`send-button ${sessionActive && inputMsg.trim() ? "active" : ""}`}
+              >
+                <Send size={18} />
+              </button>
+            </form>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  // --- UI RENDER: LANDING PAGE ---
+  return (
+    <div className="landing-container">
+      {/* Navbar */}
+      <nav className="landing-nav">
+        <div className="nav-left">
+          <div className="landing-logo-icon">
+            <Sparkles size={20} color="#D97706" />
           </div>
+          <span className="landing-brand">mitram</span>
+        </div>
+        <div className="nav-links">
+          <a href="#home" className="nav-link">
+            Home
+          </a>
+          <a href="#consultations" className="nav-link">
+            Consultations
+          </a>
+          <a href="#howitworks" className="nav-link">
+            How it Works
+          </a>
+        </div>
+        <div className="nav-right">
+          <div className="landing-wallet">
+            <Wallet size={16} color="#D97706" />
+            <span>₹{walletBalance.toFixed(2)}</span>
+          </div>
+          <button
+            className="btn-primary"
+            onClick={() => openCategoryModal(categoryCards[0])}
+          >
+            Get Started
+          </button>
+        </div>
+      </nav>
 
-          <form onSubmit={handleSendMessage} style={styles.inputBar}>
-            <input
-              type="text"
-              placeholder={
-                sessionActive
-                  ? "Type your message..."
-                  : "Start session to enable chat..."
-              }
-              disabled={!sessionActive}
-              value={inputMsg}
-              onChange={(e) => setInputMsg(e.target.value)}
-              style={styles.textInput}
-            />
-            <button
-              type="submit"
-              disabled={!sessionActive || !inputMsg.trim()}
-              style={styles.sendButton(sessionActive && inputMsg.trim())}
-            >
-              <Send size={18} />
-            </button>
-          </form>
-        </section>
-      </main>
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-sub-header">
+          CLARITY • WISDOM • A BRIGHTER TOMORROW
+        </div>
+        <h1 className="hero-title">
+          Guidance for Every Chapter
+          <br />
+          of Your Life
+        </h1>
+        <p className="hero-desc">
+          Whether it's a simple conversation, deep Vedic wisdom or astrological
+          insights — Mitram is here for you.
+        </p>
+        <button
+          className="btn-hero"
+          onClick={() => openCategoryModal(categoryCards[0])}
+        >
+          Book a Consultation <ArrowRight size={18} />
+        </button>
+      </section>
+
+      {/* Consultations Grid Section */}
+      <section id="consultations" className="section-container">
+        <div className="section-tag">— OUR CONSULTATIONS —</div>
+        <h2 className="section-heading">Different Paths. A Brighter You.</h2>
+        <p className="section-sub">
+          Explore consultations tailored to your needs, all in one place.
+        </p>
+
+        <div className="category-grid">
+          {categoryCards.map((cat, idx) => (
+            <div key={idx} className="category-card">
+              <div className="category-icon-circle">{cat.icon}</div>
+              <h3 className="category-card-title">{cat.name}</h3>
+              <p className="category-card-desc">{cat.tagline}</p>
+              <button
+                className="btn-card-action"
+                onClick={() => openCategoryModal(cat)}
+              >
+                {cat.btnText} <ArrowRight size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Stepper Section */}
+      <section id="howitworks" className="section-container-alt">
+        <div className="section-tag">— HOW IT WORKS —</div>
+        <h2 className="section-heading">Simple. Seamless. Meaningful.</h2>
+
+        <div className="stepper-grid">
+          <div className="step-item">
+            <div className="step-icon">
+              <UserCheck size={24} color="#78350F" />
+            </div>
+            <h4>1. Choose a Category</h4>
+            <p className="step-desc">
+              Select the guidance space that fits your current needs.
+            </p>
+          </div>
+          <ArrowRight size={20} color="#CBD5E1" style={{ marginTop: "24px" }} />
+          <div className="step-item">
+            <div className="step-icon">
+              <Calendar size={24} color="#78350F" />
+            </div>
+            <h4>2. Select an Expert</h4>
+            <p className="step-desc">
+              Compare per-minute rates, ratings, and bios.
+            </p>
+          </div>
+          <ArrowRight size={20} color="#CBD5E1" style={{ marginTop: "24px" }} />
+          <div className="step-item">
+            <div className="step-icon">
+              <Video size={24} color="#78350F" />
+            </div>
+            <h4>3. Connect Live</h4>
+            <p className="step-desc">
+              Start your instant private room with real-time billing.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="landing-footer">
+        <div>© 2026 Mitram. All rights reserved.</div>
+        <div>Clarity today. A brighter tomorrow.</div>
+      </footer>
+
+      {/* CONSULTANTS MODAL */}
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">{selectedCategory?.name}</h3>
+                <p className="modal-sub">
+                  Select a consultant to connect instantly
+                </p>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="btn-close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {loadingConsultants ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "40px",
+                    color: "#78716C",
+                  }}
+                >
+                  Loading consultants...
+                </div>
+              ) : consultants.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "40px",
+                    color: "#78716C",
+                  }}
+                >
+                  No active consultants available in this category.
+                </div>
+              ) : (
+                consultants.map((item) => (
+                  <div key={item.id} className="modal-consultant-card">
+                    <div>
+                      <div className="consultant-card-name">{item.name}</div>
+                      <div className="consultant-card-bio">{item.bio}</div>
+                      <div className="consultant-card-rating">
+                        <Star size={14} color="#F59E0B" fill="#F59E0B" />{" "}
+                        {item.rating} Rating
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div className="modal-rate-text">
+                        ₹{parseFloat(item.per_minute_rate).toFixed(2)}/min
+                      </div>
+                      <button
+                        className="btn-connect-now"
+                        onClick={() => handleStartConsultation(item)}
+                        disabled={isStarting}
+                      >
+                        {isStarting ? "Connecting..." : "Connect Now"}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-const styles = {
-  appContainer: {
-    backgroundColor: "#090D16",
-    color: "#F8FAFC",
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    fontFamily: "sans-serif",
-  },
-  navBar: {
-    display: "flex",
-    justifySpaceBetween: "space-between",
-    alignItems: "center",
-    padding: "16px 32px",
-    backgroundColor: "#0F172A",
-    borderBottom: "1px solid #1E293B",
-  },
-  navLeft: { display: "flex", alignItems: "center", gap: "12px" },
-  logoIcon: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "10px",
-    backgroundColor: "#1E1B4B",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  brandName: { fontSize: "18px", fontWeight: "bold" },
-  brandSub: { fontSize: "11px", color: "#94A3B8" },
-  timerPill: (active) => ({
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    backgroundColor: active ? "rgba(245, 158, 11, 0.1)" : "#1E293B",
-    padding: "6px 16px",
-    borderRadius: "20px",
-  }),
-  timerPillText: {
-    fontSize: "14px",
-    fontWeight: "bold",
-    fontFamily: "monospace",
-  },
-  navRight: { display: "flex", alignItems: "center", gap: "16px" },
-  walletWidget: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    backgroundColor: "#1E293B",
-    padding: "8px 16px",
-    borderRadius: "12px",
-    color: "#10B981",
-    fontWeight: "bold",
-  },
-  statusBadge: (online) => ({
-    fontSize: "12px",
-    padding: "4px 10px",
-    borderRadius: "8px",
-    backgroundColor: online
-      ? "rgba(16, 185, 129, 0.1)"
-      : "rgba(239, 68, 68, 0.1)",
-    color: online ? "#10B981" : "#EF4444",
-  }),
-  mainGrid: {
-    display: "grid",
-    gridTemplateColumns: "320px 1fr",
-    gap: "24px",
-    padding: "24px 32px",
-    maxWidth: "1400px",
-    margin: "0 auto",
-    width: "100%",
-    flex: 1,
-  },
-  consultantCard: {
-    backgroundColor: "#0F172A",
-    borderRadius: "16px",
-    padding: "24px",
-    border: "1px solid #1E293B",
-    height: "fit-content",
-  },
-  avatarHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "16px",
-  },
-  avatarRing: {
-    width: "64px",
-    height: "64px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #6366F1, #F59E0B)",
-    padding: "2px",
-  },
-  avatarInner: {
-    width: "100%",
-    height: "100%",
-    borderRadius: "50%",
-    backgroundColor: "#1E1B4B",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "24px",
-    fontWeight: "bold",
-  },
-  badgeRow: { display: "flex", gap: "6px" },
-  badgePill: {
-    fontSize: "11px",
-    backgroundColor: "#1E293B",
-    padding: "4px 8px",
-    borderRadius: "6px",
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-  },
-  consultantTitle: {
-    fontSize: "18px",
-    fontWeight: "bold",
-    margin: "0 0 4px 0",
-  },
-  consultantSub: { fontSize: "12px", color: "#94A3B8", margin: "0 0 20px 0" },
-  rateCard: {
-    backgroundColor: "#1E1B4B",
-    borderRadius: "12px",
-    padding: "16px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-  },
-  rateLabel: { fontSize: "11px", color: "#A5B4FC" },
-  rateValue: { fontSize: "18px", fontWeight: "bold", color: "#F59E0B" },
-  btnStart: {
-    width: "100%",
-    padding: "14px",
-    borderRadius: "10px",
-    backgroundColor: "#4F46E5",
-    color: "#FFF",
-    border: "none",
-    fontWeight: "bold",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-  },
-  btnEnd: {
-    width: "100%",
-    padding: "14px",
-    borderRadius: "10px",
-    backgroundColor: "#DC2626",
-    color: "#FFF",
-    border: "none",
-    fontWeight: "bold",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-  },
-  securityBox: {
-    marginTop: "16px",
-    fontSize: "11px",
-    color: "#64748B",
-    textAlign: "center",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "6px",
-  },
-  chatSection: {
-    backgroundColor: "#0F172A",
-    borderRadius: "16px",
-    border: "1px solid #1E293B",
-    display: "flex",
-    flexDirection: "column",
-    height: "calc(100vh - 140px)",
-  },
-  warningAlert: {
-    backgroundColor: "#7F1D1D",
-    color: "#FCA5A5",
-    padding: "12px 20px",
-    fontSize: "13px",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  chatStream: {
-    flex: 1,
-    padding: "24px",
-    overflowY: "auto",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-  emptyState: { margin: "auto", textAlign: "center", color: "#64748B" },
-  systemMessage: {
-    alignSelf: "center",
-    backgroundColor: "#1E293B",
-    color: "#94A3B8",
-    fontSize: "12px",
-    padding: "6px 16px",
-    borderRadius: "20px",
-    border: "1px solid #334155",
-  },
-  userRow: { display: "flex", justifyContent: "flex-end" },
-  expertRow: { display: "flex", justifyContent: "flex-start" },
-  userBubble: {
-    backgroundColor: "#4F46E5",
-    color: "#FFF",
-    padding: "12px 16px",
-    borderRadius: "16px 16px 2px 16px",
-    maxWidth: "65%",
-    fontSize: "14px",
-  },
-  expertBubble: {
-    backgroundColor: "#1E293B",
-    color: "#F8FAFC",
-    padding: "12px 16px",
-    borderRadius: "16px 16px 16px 2px",
-    maxWidth: "65%",
-    fontSize: "14px",
-    border: "1px solid #334155",
-  },
-  timeTag: {
-    fontSize: "10px",
-    opacity: 0.6,
-    marginTop: "4px",
-    textAlign: "right",
-  },
-  inputBar: {
-    display: "flex",
-    gap: "12px",
-    padding: "16px 24px",
-    backgroundColor: "#1E293B",
-    borderTop: "1px solid #334155",
-    borderRadius: "0 0 16px 16px",
-  },
-  textInput: {
-    flex: 1,
-    backgroundColor: "#0F172A",
-    border: "1px solid #334155",
-    borderRadius: "10px",
-    padding: "12px 16px",
-    color: "#F8FAFC",
-    outline: "none",
-  },
-  sendButton: (active) => ({
-    backgroundColor: active ? "#4F46E5" : "#334155",
-    color: active ? "#FFF" : "#64748B",
-    border: "none",
-    borderRadius: "10px",
-    padding: "0 20px",
-    cursor: active ? "pointer" : "not-allowed",
-  }),
-};
