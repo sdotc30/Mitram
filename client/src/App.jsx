@@ -1,209 +1,407 @@
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import logoImg from "./assets/logo.png";
-import heroImg from "./assets/hero-arch.jpg";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
-gsap.registerPlugin(ScrollTrigger);
+// Core Assets
+import heroBg from "./assets/hero-bg.png";
+import wheelImg from "./assets/wheel-of-fortune.png";
+import logoImg from "./assets/logo.png";
 
-function App() {
-  const heroRef = useRef(null);
-  const heroBgRef = useRef(null);
-  const heroContentRef = useRef(null);
-  const landscapeTextRef = useRef(null);
+// Category Icons
+import iconCareer from "./assets/icon-careerwealth.png";
+import iconSpace from "./assets/icon-judgefreespace.png";
+import iconKundli from "./assets/icon-kundlichart.png";
+import iconLove from "./assets/icon-lovecompat.png";
+import iconRemedies from "./assets/icon-remedies.png";
+import iconVastu from "./assets/icon-vastuhome.png";
+
+export default function App() {
+  const [scrollY, setScrollY] = useState(0);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: "top top",
-          end: "+=200%",
-          scrub: 1,
-          pin: true,
-        },
-      });
-
-      // 1. Fade out hero card text box
-      tl.to(
-        heroContentRef.current,
-        {
-          opacity: 0,
-          scale: 0.9,
-          ease: "power1.inOut",
-          duration: 0.4,
-        },
-        0,
-      );
-
-      // 2. Zoom into archway landscape
-      tl.to(
-        heroBgRef.current,
-        {
-          scale: 3.5,
-          transformOrigin: "72% 42%",
-          ease: "power1.inOut",
-          duration: 1,
-        },
-        0,
-      );
-
-      // 3. Reveal inner landscape heading
-      tl.to(
-        landscapeTextRef.current,
-        {
-          opacity: 1,
-          y: 0,
-          ease: "power2.out",
-          duration: 0.4,
-        },
-        0.6,
-      );
-    }, heroRef);
-
-    return () => ctx.revert();
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const progress = Math.min(Math.max(scrollY / 500, 0), 1);
+
+  const textOpacity = 1 - progress;
+  const textTranslateX = -progress * 80;
+
+  const wheelLeftPos = 75 - progress * 25;
+  const wheelScale = 1 + progress * 0.25;
+
+  const openAuth = (mode = "login") => {
+    setAuthMode(mode);
+    setIsAuthOpen(true);
+  };
+
+  const closeAuth = () => setIsAuthOpen(false);
+
+  const categories = [
+    {
+      title: "Kundli & Birth Chart",
+      desc: "Unveil your core life blueprint, natural talents, and planetary positions with deep precision.",
+      icon: iconKundli,
+      badge: "Popular",
+    },
+    {
+      title: "Love & Compatibility",
+      desc: "Understand emotional bonds, relationship dynamics, and long-term harmony with your partner.",
+      icon: iconLove,
+      badge: "Relationships",
+    },
+    {
+      title: "Career & Wealth",
+      desc: "Discover upcoming financial growth cycles, optimal career shifts, and business paths.",
+      icon: iconCareer,
+      badge: "Growth",
+    },
+    {
+      title: "Gemstones & Remedies",
+      desc: "Personalized elemental solutions, mantras, and gemstone guidance to balance your energy.",
+      icon: iconRemedies,
+      badge: "Balance",
+    },
+    {
+      title: "Vastu & Living Spaces",
+      desc: "Harmonize your home and workplace environment to invite positivity and prosperity.",
+      icon: iconVastu,
+      badge: "Home",
+    },
+    {
+      title: "Judgment-Free Space",
+      desc: "A compassionate, confidential environment to talk openly about life's uncertainties.",
+      icon: iconSpace,
+      badge: "Safe Space",
+    },
+  ];
 
   return (
     <div className="landing-container">
-      {/* Floating Navigation Pill */}
-      <nav className="landing-nav">
-        <div className="nav-logo-pill">
-          <img src={logoImg} alt="Mitram Logo" className="brand-logo-img" />
+      {/* Floating Translucent Header */}
+      <header className="site-header">
+        <div className="header-left">
+          <img src={logoImg} alt="Logo" className="header-logo-only" />
         </div>
 
-        <div className="nav-menu-pill">
+        <nav className="nav-menu-pill">
           <a href="#home" className="nav-link">
             Home
           </a>
           <a href="#consultations" className="nav-link">
             Consultations
           </a>
-          <a href="#experts" className="nav-link">
-            Our Experts
-          </a>
-          <a href="#store" className="nav-link">
-            Store
+          <a href="#reviews" className="nav-link">
+            Reviews
           </a>
           <a href="#about" className="nav-link">
             About
           </a>
-          <a href="#blog" className="nav-link">
-            Blog
-          </a>
-        </div>
+        </nav>
 
-        <div className="nav-action-pill">
-          <button className="btn-primary">Get Started &rarr;</button>
+        <div className="header-right">
+          <button className="btn-primary" onClick={() => openAuth("signup")}>
+            Get Started &rarr;
+          </button>
         </div>
-      </nav>
+      </header>
 
       {/* Hero Section */}
-      <section className="scroll-hero-wrapper" ref={heroRef}>
+      <section id="home" className="scroll-hero-wrapper">
         <div
           className="hero-bg-layer"
-          ref={heroBgRef}
-          style={{ backgroundImage: `url(${heroImg})` }}
+          style={{ backgroundImage: `url(${heroBg})` }}
         />
 
-        {/* Updated Hero Content Box */}
-        <div className="hero-content-layer" ref={heroContentRef}>
-          <div className="hero-text-tint-box">
-            <span className="hero-sub-header">
-              CLARITY &bull; BALANCE &bull; A BRIGHTER TOMORROW
-            </span>
-            <h1 className="hero-title">
-              Your Journey
-              <br />
-              Deserves a Mitram.
-            </h1>
+        <div className="hero-content-layer">
+          <div
+            className="hero-text-tint-box"
+            style={{
+              opacity: textOpacity,
+              transform: `translateX(${textTranslateX}px)`,
+              pointerEvents: textOpacity < 0.2 ? "none" : "auto",
+            }}
+          >
+            <span className="hero-sub-header">STEP INTO CLARITY</span>
+            <h1 className="hero-title">Your Journey Deserves a Mitram.</h1>
             <p className="hero-desc">
-              Take the first step towards clarity, balance and a brighter
-              tomorrow.
+              Take the first step towards clarity, balance, and a brighter
+              tomorrow with personalized astrology guidance.
             </p>
+
             <div className="hero-actions">
-              <button className="btn-hero">Book a Consultation &rarr;</button>
+              <button className="btn-hero" onClick={() => openAuth("signup")}>
+                Book a Consultation &rarr;
+              </button>
               <a href="#consultations" className="btn-link">
                 Explore Services
               </a>
             </div>
+
             <div className="hero-trust-badges">
-              <span>🪷 Trusted Experts</span>
-              <span>🛡️ Safe & Private</span>
-              <span>👥 Guidance for All</span>
+              <span className="badge-item">✦ Trusted Experts</span>
+              <span className="badge-item">🔒 Safe & Private</span>
+              <span className="badge-item">☀️ Guidance</span>
             </div>
           </div>
         </div>
 
-        {/* Text Revealing inside Landscape on Scroll */}
-        <div className="landscape-reveal-text" ref={landscapeTextRef}>
-          <span className="landscape-tag">WELCOME TO MITRAM</span>
-          <h2>Step Into Clarity</h2>
-          <p>
-            A sacred space designed for deep conversation, ancient wisdom, and
-            personal growth.
-          </p>
+        <div
+          className="wheel-container"
+          style={{
+            left: `${wheelLeftPos}%`,
+            transform: `translate(-50%, -50%) scale(${wheelScale})`,
+          }}
+        >
+          <img src={wheelImg} alt="Zodiac Wheel" className="wheel-img" />
         </div>
       </section>
 
-      {/* Consultation Services Grid Section */}
-      <section className="services-grid-section" id="consultations">
+      {/* Services Grid (Full Screen 100% Width) */}
+      <section
+        id="consultations"
+        className="full-width-section services-grid-section"
+      >
         <div className="section-header">
-          <span className="section-subtitle">OUR CONSULTATION SERVICES</span>
-          <h2 className="section-title">
-            Choose the Path That Resonates With You
-          </h2>
+          <span className="section-subtitle">OUR SERVICES</span>
+          <h2 className="section-title">Personalized Readings</h2>
           <p className="section-desc">
-            Tailored sessions designed to bring peace, perspective, and
-            direction.
+            Discover tailored insights designed to navigate your life paths with
+            wisdom and peace.
           </p>
         </div>
 
-        <div className="services-grid">
-          <div className="service-card">
-            <div className="service-icon">💬</div>
-            <h3>Normal Consultation</h3>
-            <p>
-              A compassionate, safe space to discuss personal challenges, seek
-              advice, and regain mental clarity without judgment.
-            </p>
-            <button className="service-btn">Learn More &rarr;</button>
-          </div>
+        <div className="flashcard-grid">
+          {categories.map((cat, idx) => (
+            <div key={idx} className="flashcard">
+              <div className="card-top">
+                <div className="card-icon-wrapper">
+                  <img
+                    src={cat.icon}
+                    alt={cat.title}
+                    className="category-icon-img"
+                  />
+                </div>
+                <span className="card-badge">{cat.badge}</span>
+              </div>
+              <div className="card-body">
+                <h3>{cat.title}</h3>
+                <p>{cat.desc}</p>
+              </div>
+              <button
+                className="card-action-btn"
+                onClick={() => openAuth("signup")}
+              >
+                Book Session
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="service-card">
-            <div className="service-icon">🕉️</div>
-            <h3>Vedic Consultation</h3>
-            <p>
-              Rooted in ancient scriptures and timeless philosophies to guide
-              you through life's deeper spiritual questions.
-            </p>
-            <button className="service-btn">Learn More &rarr;</button>
-          </div>
+      {/* Testimonials */}
+      <section id="reviews" className="full-width-section testimonials-section">
+        <div className="section-header">
+          <span className="section-subtitle">TESTIMONIALS</span>
+          <h2 className="section-title">What Our Clients Say</h2>
+        </div>
 
-          <div className="service-card">
-            <div className="service-icon">✦</div>
-            <h3>Astro Consultation</h3>
-            <p>
-              In-depth horoscope alignments and celestial chart analysis to
-              reveal underlying life patterns and opportunities.
-            </p>
-            <button className="service-btn">Learn More &rarr;</button>
-          </div>
-
-          <div className="service-card">
-            <div className="service-icon">🕊️</div>
-            <h3>No-Judgement Zone</h3>
-            <p>
-              1-on-1 confidential listening sessions dedicated entirely to
-              expressing yourself freely and feeling heard.
-            </p>
-            <button className="service-btn">Learn More &rarr;</button>
+        <div className="marquee-wrapper">
+          <div className="marquee-container">
+            {[
+              {
+                name: "Ananya R.",
+                role: "Career Guidance",
+                text: "The birth chart reading provided so much clarity during my career transition. Highly recommended!",
+                rating: "★★★★★",
+              },
+              {
+                name: "Rohan M.",
+                role: "Relationship Sync",
+                text: "Incredible insight into our compatibility. Helped us communicate with far more understanding.",
+                rating: "★★★★★",
+              },
+              {
+                name: "Priya S.",
+                role: "Annual Reading",
+                text: "Spot on year forecast! Helped me prepare for major transitions with complete confidence.",
+                rating: "★★★★★",
+              },
+              {
+                name: "Dev K.",
+                role: "Personal Guidance",
+                text: "Genuinely compassionate approach. The session felt warm, grounded, and deeply insightful.",
+                rating: "★★★★★",
+              },
+            ]
+              .concat([
+                {
+                  name: "Ananya R.",
+                  role: "Career Guidance",
+                  text: "The birth chart reading provided so much clarity during my career transition. Highly recommended!",
+                  rating: "★★★★★",
+                },
+                {
+                  name: "Rohan M.",
+                  role: "Relationship Sync",
+                  text: "Incredible insight into our compatibility. Helped us communicate with far more understanding.",
+                  rating: "★★★★★",
+                },
+                {
+                  name: "Priya S.",
+                  role: "Annual Reading",
+                  text: "Spot on year forecast! Helped me prepare for major transitions with complete confidence.",
+                  rating: "★★★★★",
+                },
+                {
+                  name: "Dev K.",
+                  role: "Personal Guidance",
+                  text: "Genuinely compassionate approach. The session felt warm, grounded, and deeply insightful.",
+                  rating: "★★★★★",
+                },
+              ])
+              .map((review, idx) => (
+                <div key={idx} className="testimonial-card">
+                  <div className="testimonial-rating">{review.rating}</div>
+                  <p className="testimonial-text">"{review.text}"</p>
+                  <div className="testimonial-author">
+                    <div className="author-avatar">{review.name[0]}</div>
+                    <div className="author-info">
+                      <h4>{review.name}</h4>
+                      <span>{review.role}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="full-width-section site-footer">
+        <div className="footer-content">
+          <div className="footer-brand">
+            <div className="footer-logo-row">
+              <img
+                src={logoImg}
+                alt="Mitram Logo"
+                className="footer-logo-img"
+              />
+            </div>
+            <p>
+              Guiding your journey with wisdom, cosmic alignment, and
+              personalized spiritual clarity.
+            </p>
+          </div>
+
+          <div className="footer-column">
+            <h4>Services</h4>
+            <ul>
+              <li>
+                <a href="#consultations">Kundli & Chart</a>
+              </li>
+              <li>
+                <a href="#consultations">Love Compatibility</a>
+              </li>
+              <li>
+                <a href="#consultations">Career & Wealth</a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="footer-column">
+            <h4>Company</h4>
+            <ul>
+              <li>
+                <a href="#about">About Us</a>
+              </li>
+              <li>
+                <a href="#reviews">Reviews</a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="footer-column">
+            <h4>Legal</h4>
+            <ul>
+              <li>
+                <a href="#privacy">Privacy Policy</a>
+              </li>
+              <li>
+                <a href="#terms">Terms of Service</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="footer-bottom">
+          <span>
+            &copy; {new Date().getFullYear()} Mitram. All rights reserved.
+          </span>
+          <span>Crafted with clarity & wisdom.</span>
+        </div>
+      </footer>
+
+      {/* Auth Modal */}
+      {isAuthOpen && (
+        <div className="auth-modal-overlay" onClick={closeAuth}>
+          <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={closeAuth}>
+              &times;
+            </button>
+
+            <div className="auth-tabs">
+              <button
+                className={`tab-btn ${authMode === "login" ? "active" : ""}`}
+                onClick={() => setAuthMode("login")}
+              >
+                Log In
+              </button>
+              <button
+                className={`tab-btn ${authMode === "signup" ? "active" : ""}`}
+                onClick={() => setAuthMode("signup")}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                alert(
+                  `${authMode === "login" ? "Logging in" : "Signing up"}...`,
+                );
+              }}
+            >
+              {authMode === "signup" && (
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input type="text" placeholder="Enter your name" required />
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>Email Address</label>
+                <input type="email" placeholder="name@example.com" required />
+              </div>
+
+              <div className="form-group">
+                <label>Password</label>
+                <input type="password" placeholder="••••••••" required />
+              </div>
+
+              <button type="submit" className="btn-auth-submit">
+                {authMode === "login" ? "Log In" : "Create Account"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-export default App;
