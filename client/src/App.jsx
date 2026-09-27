@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "./App.css";
 
 // Core Assets
@@ -14,26 +16,76 @@ import iconLove from "./assets/icon-lovecompat.png";
 import iconRemedies from "./assets/icon-remedies.png";
 import iconVastu from "./assets/icon-vastuhome.png";
 
+// Register ScrollTrigger plugin
+gsap.registerPlugin(ScrollTrigger);
+
 export default function App() {
-  const [scrollY, setScrollY] = useState(0);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
 
+  const heroTrackRef = useRef(null);
+  const stickyFrameRef = useRef(null);
+  const textBoxRef = useRef(null);
+  const wheelRef = useRef(null);
+
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const ctx = gsap.context(() => {
+      // Put the wheel exactly where it appears in the initial hero.
+      // GSAP owns the complete transform so CSS and GSAP never fight each other.
+      gsap.set(wheelRef.current, {
+        xPercent: -50,
+        yPercent: -50,
+        x: "32vw",
+        scale: 0.85,
+        transformOrigin: "center center",
+      });
+
+      // Initial text state.
+      gsap.set(textBoxRef.current, {
+        x: 0,
+        opacity: 1,
+      });
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: heroTrackRef.current,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+          pin: stickyFrameRef.current,
+          pinSpacing: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      // Text exits while the wheel moves into focus.
+      tl.to(
+        textBoxRef.current,
+        {
+          x: -120,
+          opacity: 0,
+          duration: 1,
+          ease: "power2.inOut",
+        },
+        0,
+      );
+
+      // Wheel travels from the wall to the exact center of the viewport.
+      tl.to(
+        wheelRef.current,
+        {
+          x: 0,
+          scale: 1.15,
+          duration: 1,
+          ease: "power2.inOut",
+        },
+        0,
+      );
+    }, heroTrackRef);
+
+    return () => ctx.revert();
   }, []);
-
-  const progress = Math.min(Math.max(scrollY / 500, 0), 1);
-
-  const textOpacity = 1 - progress;
-  const textTranslateX = -progress * 80;
-
-  const wheelLeftPos = 75 - progress * 25;
-  const wheelScale = 1 + progress * 0.25;
 
   const openAuth = (mode = "login") => {
     setAuthMode(mode);
@@ -75,7 +127,7 @@ export default function App() {
     },
     {
       title: "Judgment-Free Space",
-      desc: "A compassionate, confidential environment to talk openly about life's uncertainties.",
+      desc: "A compassionate, confidential environment to talk openly about life’s uncertainties.",
       icon: iconSpace,
       badge: "Safe Space",
     },
@@ -83,7 +135,7 @@ export default function App() {
 
   return (
     <div className="landing-container">
-      {/* Floating Translucent Header */}
+      {/* Header */}
       <header className="site-header">
         <div className="header-left">
           <img src={logoImg} alt="Logo" className="header-logo-only" />
@@ -111,58 +163,50 @@ export default function App() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section id="home" className="scroll-hero-wrapper">
-        <div
-          className="hero-bg-layer"
-          style={{ backgroundImage: `url(${heroBg})` }}
-        />
-
-        <div className="hero-content-layer">
+      {/* GSAP Scroll Animation Track */}
+      <div ref={heroTrackRef} className="scroll-hero-track" id="home">
+        <section ref={stickyFrameRef} className="sticky-hero-frame">
+          {/* Hero Background - Pinned solidly */}
           <div
-            className="hero-text-tint-box"
-            style={{
-              opacity: textOpacity,
-              transform: `translateX(${textTranslateX}px)`,
-              pointerEvents: textOpacity < 0.2 ? "none" : "auto",
-            }}
-          >
-            <span className="hero-sub-header">STEP INTO CLARITY</span>
-            <h1 className="hero-title">Your Journey Deserves a Mitram.</h1>
-            <p className="hero-desc">
-              Take the first step towards clarity, balance, and a brighter
-              tomorrow with personalized astrology guidance.
-            </p>
+            className="hero-bg-layer"
+            style={{ backgroundImage: `url(${heroBg})` }}
+          />
 
-            <div className="hero-actions">
-              <button className="btn-hero" onClick={() => openAuth("signup")}>
-                Book a Consultation &rarr;
-              </button>
-              <a href="#consultations" className="btn-link">
-                Explore Services
-              </a>
-            </div>
+          {/* Hero Content Layer */}
+          <div className="hero-content-layer">
+            <div ref={textBoxRef} className="hero-text-tint-box">
+              <span className="hero-sub-header">STEP INTO CLARITY</span>
+              <h1 className="hero-title">Your Journey Deserves a Mitram.</h1>
+              <p className="hero-desc">
+                Take the first step towards clarity, balance, and a brighter
+                tomorrow with personalized astrology guidance.
+              </p>
 
-            <div className="hero-trust-badges">
-              <span className="badge-item">✦ Trusted Experts</span>
-              <span className="badge-item">🔒 Safe & Private</span>
-              <span className="badge-item">☀️ Guidance</span>
+              <div className="hero-actions">
+                <button className="btn-hero" onClick={() => openAuth("signup")}>
+                  Book a Consultation &rarr;
+                </button>
+                <a href="#consultations" className="btn-link">
+                  Explore Services
+                </a>
+              </div>
+
+              <div className="hero-trust-badges">
+                <span className="badge-item">✦ Trusted Experts</span>
+                <span className="badge-item">🔒 Safe & Private</span>
+                <span className="badge-item">☀️ Guidance</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div
-          className="wheel-container"
-          style={{
-            left: `${wheelLeftPos}%`,
-            transform: `translate(-50%, -50%) scale(${wheelScale})`,
-          }}
-        >
-          <img src={wheelImg} alt="Zodiac Wheel" className="wheel-img" />
-        </div>
-      </section>
+          {/* Wheel Container Layer */}
+          <div ref={wheelRef} className="wheel-container">
+            <img src={wheelImg} alt="Zodiac Wheel" className="wheel-img" />
+          </div>
+        </section>
+      </div>
 
-      {/* Services Grid (Full Screen 100% Width) */}
+      {/* Services Grid Section */}
       <section
         id="consultations"
         className="full-width-section services-grid-section"

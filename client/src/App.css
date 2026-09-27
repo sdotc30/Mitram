@@ -1,11 +1,11 @@
-/* Base Resets & Full Screen Enforcers */
+/* Base Resets */
 html,
 body,
 #root {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-height: 100vh;
+  min-height: 100%;
   box-sizing: border-box;
   font-family:
     "Inter",
@@ -14,7 +14,10 @@ body,
     sans-serif;
   background-color: #faf6f0;
   color: #2c2523;
-  overflow-x: hidden;
+}
+
+html {
+  overflow-x: clip;
 }
 
 *,
@@ -25,12 +28,12 @@ body,
 
 .landing-container {
   width: 100%;
-  min-height: 100vh;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
+  background-color: #faf6f0;
 }
 
-/* 1. Floating Header with Floating Glass Pills */
+/* 1. Header */
 .site-header {
   position: fixed;
   top: 1.2rem;
@@ -41,15 +44,14 @@ body,
   justify-content: space-between;
   padding: 0 3rem;
   z-index: 100;
-  background: transparent; /* No full edge-to-edge solid bar */
-  pointer-events: none; /* Let clicks pass through empty spaces */
+  background: transparent;
+  pointer-events: none;
 }
 
 .site-header > * {
-  pointer-events: auto; /* Enable clicks on actual buttons/links */
+  pointer-events: auto;
 }
 
-/* Floating Logo Capsule */
 .header-left {
   display: flex;
   align-items: center;
@@ -68,7 +70,6 @@ body,
   object-fit: contain;
 }
 
-/* Center Nav Pill */
 .nav-menu-pill {
   display: flex;
   gap: 2rem;
@@ -112,36 +113,43 @@ body,
   transform: translateY(-1px);
 }
 
-/* Hero Wrapper - Strict 100vw */
-.scroll-hero-wrapper {
+/* 2. GSAP Track & Hero Frame */
+.scroll-hero-track {
+  height: 180vh;
   position: relative;
-  width: 100vw;
+  width: 100%;
+}
+
+.sticky-hero-frame {
+  width: 100%;
   height: 100vh;
+  height: 100dvh;
+  position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
 }
 
+/* Background Layer */
 .hero-bg-layer {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   z-index: 1;
+  pointer-events: none;
 }
 
 .hero-content-layer {
   position: relative;
   z-index: 10;
-  padding-left: 5vw;
-  width: 48%;
+  padding-left: 10vw;
+  width: 50%;
 }
 
-/* Translucent Light Glass Box for Text */
 .hero-text-tint-box {
   background: linear-gradient(
     135deg,
@@ -154,9 +162,7 @@ body,
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
-  transition:
-    transform 0.1s linear,
-    opacity 0.1s linear;
+  will-change: opacity, transform;
 }
 
 .hero-sub-header {
@@ -223,17 +229,16 @@ body,
   font-weight: 500;
 }
 
-/* Zodiac Wheel Asset */
+/* Wheel Container - GSAP controls the complete transform */
 .wheel-container {
   position: absolute;
   top: 50%;
-  width: 550px;
-  height: 550px;
+  left: 50%;
+  width: 560px;
+  height: 560px;
   z-index: 5;
-  transition:
-    left 0.1s linear,
-    transform 0.1s linear;
   pointer-events: none;
+  will-change: transform;
 }
 
 .wheel-img {
@@ -242,10 +247,13 @@ body,
   object-fit: contain;
 }
 
-/* Full Width Sections Below Hero */
+/* Sub-sections */
 .full-width-section {
   width: 100vw;
   padding: 6rem 8vw;
+  position: relative;
+  z-index: 20;
+  background-color: #faf6f0;
 }
 
 .services-grid-section {
@@ -276,7 +284,6 @@ body,
   margin: 0 auto;
 }
 
-/* Services Grid Layout */
 .flashcard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -360,7 +367,6 @@ body,
   color: #fff;
 }
 
-/* Testimonials */
 .testimonials-section {
   background: #faf6f0;
   overflow: hidden;
@@ -436,7 +442,6 @@ body,
   color: #8c7b77;
 }
 
-/* Footer */
 .site-footer {
   background: #1b1715;
   color: #d1c7bd;
@@ -496,7 +501,6 @@ body,
   color: #8c7b77;
 }
 
-/* Modal */
 .auth-modal-overlay {
   position: fixed;
   inset: 0;
