@@ -4,13 +4,16 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "./App.css";
 
 import { useAuth } from "./AuthContext";
-import {
-  loginWithGoogle,
-  loginAsGuest,
-  loginWithEmail,
-  registerWithEmail,
-} from "./firebase";
 
+// Page Component Imports
+import LoveAndCompatibility from "./pages/LoveAndCompatibility";
+import CareerAndWealth from "./pages/CareerAndWealth";
+import GemstonesAndRemedies from "./pages/GemstonesAndRemedies";
+import VastuAndLivingSpaces from "./pages/VastuAndLivingSpaces";
+import JudgementFreeZone from "./pages/JudgementFreeZone";
+import KundliAndBirthChart from "./pages/KundliAndBirthChart";
+
+// Asset Imports
 import heroBg from "./assets/hero-bg.png";
 import wheelImg from "./assets/wheel-of-fortune.png";
 import logoImg from "./assets/logo.png";
@@ -25,13 +28,16 @@ import iconVastu from "./assets/icon-vastuhome.png";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function App() {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, loginWithGoogle, loginAsGuest } = useAuth();
+
+  // Page View Routing State
+  const [currentPage, setCurrentPage] = useState("home");
 
   // Auth Modal States
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // User Auth Fields
   const [email, setEmail] = useState("");
@@ -44,7 +50,7 @@ export default function App() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [profileFullName, setProfileFullName] = useState("");
   const [dob, setDob] = useState("");
-  const [timeOfBirth, setTimeOfBirth] = useState(""); // Optional (can be null/empty)
+  const [timeOfBirth, setTimeOfBirth] = useState("");
   const [placeOfBirth, setPlaceOfBirth] = useState("");
   const [gender, setGender] = useState("");
 
@@ -54,7 +60,22 @@ export default function App() {
   const wheelRef = useRef(null);
   const profileDropdownRef = useRef(null);
 
-  // Load existing profile details or trigger onboarding if first time
+  const navigateTo = (pageKey) => {
+    if (!pageKey) return;
+    setCurrentPage(pageKey);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleBookingClick = (e, pageKey) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    if (currentUser) {
+      navigateTo(pageKey);
+    } else {
+      openAuth("signup");
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       const savedDetails = localStorage.getItem(
@@ -65,24 +86,31 @@ export default function App() {
       );
 
       if (savedDetails) {
-        const parsed = JSON.parse(savedDetails);
-        setProfileFullName(parsed.fullName || currentUser.displayName || "");
-        setDob(parsed.dob || "");
-        setTimeOfBirth(parsed.timeOfBirth || "");
-        setPlaceOfBirth(parsed.placeOfBirth || "");
-        setGender(parsed.gender || "");
+        try {
+          const parsed = JSON.parse(savedDetails);
+          setProfileFullName(parsed.fullName || currentUser.displayName || "");
+          setDob(parsed.dob || "");
+          setTimeOfBirth(parsed.timeOfBirth || "");
+          setPlaceOfBirth(parsed.placeOfBirth || "");
+          setGender(parsed.gender || "");
+        } catch (err) {
+          console.error("Error parsing user details", err);
+        }
       } else if (currentUser.displayName) {
         setProfileFullName(currentUser.displayName);
       }
 
-      // Auto popup ONLY if user hasn't marked setup as done
-      if (!hasCompletedProfile) {
+      if (!hasCompletedProfile && !currentUser.isAnonymous) {
         setIsDetailsModalOpen(true);
       }
+    } else {
+      setIsDetailsModalOpen(false);
     }
   }, [currentUser]);
 
   useEffect(() => {
+    if (currentPage !== "home") return;
+
     const ctx = gsap.context(() => {
       gsap.set(wheelRef.current, {
         xPercent: -50,
@@ -134,7 +162,7 @@ export default function App() {
     }, heroTrackRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -142,7 +170,7 @@ export default function App() {
         if (isAuthOpen) closeAuth();
         if (isProfileMenuOpen) setIsProfileMenuOpen(false);
         if (isDetailsModalOpen) setIsDetailsModalOpen(false);
-        if (isMobileNavOpen) setIsMobileNavOpen(false);
+        if (isSidebarOpen) setIsSidebarOpen(false);
       }
     };
 
@@ -161,7 +189,7 @@ export default function App() {
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isAuthOpen, isProfileMenuOpen, isDetailsModalOpen, isMobileNavOpen]);
+  }, [isAuthOpen, isProfileMenuOpen, isDetailsModalOpen, isSidebarOpen]);
 
   const switchMode = (mode) => {
     setAuthMode(mode);
@@ -191,8 +219,10 @@ export default function App() {
 
     try {
       if (authMode === "login") {
+        const { loginWithEmail } = await import("./firebase");
         await loginWithEmail(email, password);
       } else {
+        const { registerWithEmail } = await import("./firebase");
         await registerWithEmail(email, password, fullName);
       }
       closeAuth();
@@ -208,7 +238,7 @@ export default function App() {
     setAuthLoading(true);
     const res = await loginWithGoogle();
     setAuthLoading(false);
-    if (res.error) {
+    if (res?.error) {
       setAuthError(res.error);
     } else {
       closeAuth();
@@ -220,7 +250,7 @@ export default function App() {
     setAuthLoading(true);
     const res = await loginAsGuest();
     setAuthLoading(false);
-    if (res.error) {
+    if (res?.error) {
       setAuthError(res.error);
     } else {
       closeAuth();
@@ -229,6 +259,7 @@ export default function App() {
 
   const handleLogout = async () => {
     setIsProfileMenuOpen(false);
+    setIsSidebarOpen(false);
     await logout();
   };
 
@@ -286,36 +317,42 @@ export default function App() {
       desc: "Unveil your core life blueprint, natural talents, and planetary positions with deep precision.",
       icon: iconKundli,
       badge: "Popular",
+      pageKey: "kundli-and-birth-chart",
     },
     {
       title: "Love & Compatibility",
       desc: "Understand emotional bonds, relationship dynamics, and long-term harmony with your partner.",
       icon: iconLove,
       badge: "Relationships",
+      pageKey: "love-and-compatibility",
     },
     {
       title: "Career & Wealth",
       desc: "Discover upcoming financial growth cycles, optimal career shifts, and business paths.",
       icon: iconCareer,
       badge: "Growth",
+      pageKey: "career-and-wealth",
     },
     {
       title: "Gemstones & Remedies",
       desc: "Personalized elemental solutions, mantras, and gemstone guidance to balance your energy.",
       icon: iconRemedies,
       badge: "Balance",
+      pageKey: "gemstones-and-remedies",
     },
     {
       title: "Vastu & Living Spaces",
       desc: "Harmonize your home and workplace environment to invite positivity and prosperity.",
       icon: iconVastu,
       badge: "Home",
+      pageKey: "vastu-and-living-spaces",
     },
     {
       title: "Judgment-Free Space",
       desc: "A compassionate, confidential environment to talk openly about life’s uncertainties.",
       icon: iconSpace,
       badge: "Safe Space",
+      pageKey: "judgment-free-space",
     },
   ];
 
@@ -357,43 +394,319 @@ export default function App() {
     })),
   ];
 
+  // Shell Layout Wrapper for All Category Pages
+  const renderSubPage = (PageComponent) => (
+    <>
+      <div
+        className={`sidebar-overlay ${isSidebarOpen ? "open" : ""}`}
+        onClick={() => setIsSidebarOpen(false)}
+      />
+      <aside className={`sidebar-drawer ${isSidebarOpen ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <span className="sidebar-title">Menu</span>
+          <button
+            className="sidebar-close-btn"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close Sidebar"
+          >
+            &times;
+          </button>
+        </div>
+        <ul className="sidebar-nav-list">
+          <li className="sidebar-nav-item">
+            <button
+              className="sidebar-nav-link"
+              onClick={() => {
+                setIsSidebarOpen(false);
+                navigateTo("home");
+              }}
+            >
+              Home
+            </button>
+          </li>
+          <li className="sidebar-nav-item">
+            <button
+              className="sidebar-nav-link"
+              onClick={() => {
+                setIsSidebarOpen(false);
+                navigateTo("home");
+              }}
+            >
+              Consultations
+            </button>
+          </li>
+          <li className="sidebar-nav-item">
+            <button
+              className="sidebar-nav-link"
+              onClick={() => {
+                setIsSidebarOpen(false);
+                navigateTo("home");
+              }}
+            >
+              Reviews
+            </button>
+          </li>
+          {currentUser && (
+            <>
+              <li className="sidebar-nav-item">
+                <button
+                  className="sidebar-action-btn sidebar-edit-details-btn"
+                  onClick={() => {
+                    setIsSidebarOpen(false);
+                    setIsDetailsModalOpen(true);
+                  }}
+                >
+                  Birth Details
+                </button>
+              </li>
+              <li className="sidebar-nav-item">
+                <button className="sidebar-action-btn" onClick={handleLogout}>
+                  Log Out
+                </button>
+              </li>
+            </>
+          )}
+        </ul>
+      </aside>
+
+      <PageComponent
+        onBack={() => navigateTo("home")}
+        onOpenAuth={() => openAuth("signup")}
+        onOpenSidebar={() => setIsSidebarOpen(true)}
+        userProfile={{ displayName: profileFullName }}
+        isDetailsModalOpen={isDetailsModalOpen}
+        setIsDetailsModalOpen={setIsDetailsModalOpen}
+      />
+
+      {/* User Onboarding & Birth Details Modal for Subpages */}
+      {isDetailsModalOpen && (
+        <div
+          className="auth-modal-overlay"
+          onClick={() => setIsDetailsModalOpen(false)}
+        >
+          <div
+            className="auth-modal-card profile-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close-btn"
+              onClick={() => setIsDetailsModalOpen(false)}
+              aria-label="Close details modal"
+            >
+              &times;
+            </button>
+
+            <div className="modal-header-text">
+              <h2>Birth Profile Setup</h2>
+              <p>
+                Provide your accurate birth details to unlock precise Kundli and
+                astrology readings.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveDetails}>
+              <div className="form-group">
+                <label>Full Name *</label>
+                <input
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={profileFullName}
+                  onChange={(e) => setProfileFullName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-row-2col">
+                <div className="form-group">
+                  <label>Date of Birth *</label>
+                  <input
+                    type="date"
+                    value={dob}
+                    onChange={(e) => setDob(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Time of Birth</label>
+                  <input
+                    type="time"
+                    value={timeOfBirth}
+                    onChange={(e) => setTimeOfBirth(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Place of Birth (City, Country) *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. New Delhi, India"
+                  value={placeOfBirth}
+                  onChange={(e) => setPlaceOfBirth(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Gender *</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    Select Gender
+                  </option>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                  <option value="other">Other / Prefer not to say</option>
+                </select>
+              </div>
+
+              <button type="submit" className="btn-auth-submit">
+                Save & Continue
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  // Router Dispatcher for Specific Page Views
+  if (currentPage === "kundli-and-birth-chart") {
+    return renderSubPage(KundliAndBirthChart);
+  }
+  if (currentPage === "love-and-compatibility") {
+    return renderSubPage(LoveAndCompatibility);
+  }
+  if (currentPage === "career-and-wealth") {
+    return renderSubPage(CareerAndWealth);
+  }
+  if (currentPage === "gemstones-and-remedies") {
+    return renderSubPage(GemstonesAndRemedies);
+  }
+  if (currentPage === "vastu-and-living-spaces") {
+    return renderSubPage(VastuAndLivingSpaces);
+  }
+  if (currentPage === "judgment-free-space") {
+    return renderSubPage(JudgementFreeZone);
+  }
+
   return (
     <div className="landing-container">
+      {/* Slide-out Sidebar Drawer & Overlay */}
+      <div
+        className={`sidebar-overlay ${isSidebarOpen ? "open" : ""}`}
+        onClick={() => setIsSidebarOpen(false)}
+      />
+      <aside className={`sidebar-drawer ${isSidebarOpen ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <span className="sidebar-title">Menu</span>
+          <button
+            className="sidebar-close-btn"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close Sidebar"
+          >
+            &times;
+          </button>
+        </div>
+        <ul className="sidebar-nav-list">
+          <li className="sidebar-nav-item">
+            <button
+              className="sidebar-nav-link"
+              onClick={() => {
+                setIsSidebarOpen(false);
+                navigateTo("home");
+              }}
+            >
+              Home
+            </button>
+          </li>
+          <li className="sidebar-nav-item">
+            <a
+              href="#consultations"
+              className="sidebar-nav-link"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              Consultations
+            </a>
+          </li>
+          <li className="sidebar-nav-item">
+            <a
+              href="#reviews"
+              className="sidebar-nav-link"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              Reviews
+            </a>
+          </li>
+          <li className="sidebar-nav-item">
+            <a
+              href="#about"
+              className="sidebar-nav-link"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              About
+            </a>
+          </li>
+          {currentUser && (
+            <>
+              <li className="sidebar-nav-item">
+                <button
+                  className="sidebar-action-btn sidebar-edit-details-btn"
+                  onClick={() => {
+                    setIsSidebarOpen(false);
+                    setIsDetailsModalOpen(true);
+                  }}
+                >
+                  Birth Details
+                </button>
+              </li>
+              <li className="sidebar-nav-item">
+                <button className="sidebar-action-btn" onClick={handleLogout}>
+                  Log Out
+                </button>
+              </li>
+            </>
+          )}
+        </ul>
+      </aside>
+
       <header className="site-header">
         <div className="header-left">
+          <button
+            className="hamburger-toggle-btn"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open Navigation Sidebar"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
           <img src={logoImg} alt="Logo" className="header-logo-only" />
         </div>
 
-        {/* Navigation Links with Hamburger Mobile Menu Support */}
-        <nav
-          className={`nav-menu-pill ${isMobileNavOpen ? "mobile-open" : ""}`}
-        >
-          <a
-            href="#home"
-            className="nav-link"
-            onClick={() => setIsMobileNavOpen(false)}
-          >
+        <nav className="nav-menu-pill">
+          <a href="#home" className="nav-link">
             Home
           </a>
-          <a
-            href="#consultations"
-            className="nav-link"
-            onClick={() => setIsMobileNavOpen(false)}
-          >
+          <a href="#consultations" className="nav-link">
             Consultations
           </a>
-          <a
-            href="#reviews"
-            className="nav-link"
-            onClick={() => setIsMobileNavOpen(false)}
-          >
+          <a href="#reviews" className="nav-link">
             Reviews
           </a>
-          <a
-            href="#about"
-            className="nav-link"
-            onClick={() => setIsMobileNavOpen(false)}
-          >
+          <a href="#about" className="nav-link">
             About
           </a>
         </nav>
@@ -490,28 +803,6 @@ export default function App() {
               Get Started &rarr;
             </button>
           )}
-
-          {/* Hamburger Menu Toggle Icon */}
-          <button
-            className="hamburger-toggle-btn"
-            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-            aria-label="Toggle Navigation Menu"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              {isMobileNavOpen ? (
-                <path d="M18 6L6 18M6 6l12 12" />
-              ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
         </div>
       </header>
 
@@ -532,7 +823,13 @@ export default function App() {
               </p>
 
               <div className="hero-actions">
-                <button className="btn-hero" onClick={() => openAuth("signup")}>
+                <button
+                  type="button"
+                  className="btn-hero"
+                  onClick={(e) =>
+                    handleBookingClick(e, "kundli-and-birth-chart")
+                  }
+                >
                   Book a Consultation &rarr;
                 </button>
                 <a href="#consultations" className="btn-link">
@@ -543,7 +840,7 @@ export default function App() {
               <div className="hero-trust-badges">
                 <span className="badge-item">✦ Trusted Experts</span>
                 <span className="badge-item">🔒 Safe & Private</span>
-                <span className="badge-item">☀️ Guidance</span>
+                <span className="badge-item">☀ Guidance</span>
               </div>
             </div>
           </div>
@@ -575,8 +872,13 @@ export default function App() {
         </div>
 
         <div className="flashcard-grid">
-          {categories.map((cat, idx) => (
-            <div key={idx} className="flashcard">
+          {categories.map((cat) => (
+            <div
+              key={cat.pageKey}
+              className="flashcard"
+              onClick={(e) => handleBookingClick(e, cat.pageKey)}
+              style={{ cursor: "pointer" }}
+            >
               <div className="card-top">
                 <div className="card-icon-wrapper">
                   <img
@@ -592,8 +894,12 @@ export default function App() {
                 <p>{cat.desc}</p>
               </div>
               <button
+                type="button"
                 className="card-action-btn"
-                onClick={() => openAuth("signup")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBookingClick(e, cat.pageKey);
+                }}
               >
                 Book Session
               </button>
@@ -647,13 +953,32 @@ export default function App() {
             <h4>Services</h4>
             <ul>
               <li>
-                <a href="#consultations">Kundli & Chart</a>
+                <button
+                  className="footer-nav-btn"
+                  onClick={(e) =>
+                    handleBookingClick(e, "kundli-and-birth-chart")
+                  }
+                >
+                  Kundli & Chart
+                </button>
               </li>
               <li>
-                <a href="#consultations">Love Compatibility</a>
+                <button
+                  className="footer-nav-btn"
+                  onClick={(e) =>
+                    handleBookingClick(e, "love-and-compatibility")
+                  }
+                >
+                  Love Compatibility
+                </button>
               </li>
               <li>
-                <a href="#consultations">Career & Wealth</a>
+                <button
+                  className="footer-nav-btn"
+                  onClick={(e) => handleBookingClick(e, "career-and-wealth")}
+                >
+                  Career & Wealth
+                </button>
               </li>
             </ul>
           </div>
@@ -833,7 +1158,7 @@ export default function App() {
         </div>
       )}
 
-      {/* User Onboarding & Birth Details Modal */}
+      {/* User Onboarding & Birth Details Modal for Landing Page */}
       {isDetailsModalOpen && (
         <div
           className="auth-modal-overlay"

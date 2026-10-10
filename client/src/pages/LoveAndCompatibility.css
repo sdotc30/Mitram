@@ -1,0 +1,583 @@
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap");
+
+/* Main Page Container */
+.love-page-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #faf6f0;
+  color: #2c2523;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  overflow-x: clip;
+}
+
+.love-hero-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Header & Balanced Alignment */
+.site-header {
+  position: absolute;
+  top: 1.2rem;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3rem;
+  z-index: 100;
+  background: transparent;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.site-header > * {
+  pointer-events: auto;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.header-left {
+  justify-content: flex-start;
+  gap: 0.8rem;
+}
+
+.header-right {
+  justify-content: flex-end;
+  position: relative;
+}
+
+/* Hamburger Toggle Button */
+.hamburger-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 253, 249, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  color: #1e1b18;
+  z-index: 101;
+  transition: all 0.2s ease;
+}
+
+.hamburger-toggle-btn:hover {
+  background: rgba(255, 253, 249, 0.9);
+  transform: translateY(-1px);
+}
+
+.header-logo-container {
+  background: rgba(255, 253, 249, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Logo Sizing */
+.header-logo-only {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Center Nav Pill */
+.nav-menu-pill {
+  display: flex;
+  gap: 2rem;
+  background: rgba(255, 253, 249, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.7rem 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #3b312e;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #b8860b;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: #1e1b18;
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #38322e;
+  transform: translateY(-1px);
+}
+
+/* Profile Pill Header Styling */
+.user-profile-wrapper {
+  position: relative;
+}
+
+.user-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 253, 249, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 0.35rem 0.8rem 0.35rem 0.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.user-profile-btn:hover {
+  background: rgba(255, 253, 249, 0.9);
+  transform: translateY(-1px);
+}
+
+.user-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #b8860b;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.user-profile-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e1b18;
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-chevron {
+  color: #635653;
+  transition: transform 0.2s ease;
+}
+
+.dropdown-chevron.open {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  width: 200px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 0.8rem 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(220, 200, 180, 0.4);
+  z-index: 1000;
+}
+
+.dropdown-header {
+  padding: 0.4rem 1.2rem 0.4rem;
+}
+
+.dropdown-user-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e1b18;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-user-sub {
+  font-size: 0.78rem;
+  color: #8c7b77;
+  margin: 0.2rem 0 0 0;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: rgba(220, 200, 180, 0.3);
+  margin: 0.4rem 0;
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 0.65rem 1.2rem;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.logout-item {
+  color: #d93025;
+}
+
+.logout-item:hover {
+  background: #fce8e6;
+}
+
+/* Hero Section Base */
+.love-hero-section {
+  width: 100%;
+  min-height: 88vh;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.love-hero-overlay {
+  width: 100%;
+  height: 100%;
+  min-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 140px 20px 40px 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Hero Text Styling */
+.love-hero-title {
+  font-family: "Cinzel", "Playfair Display", serif;
+  font-size: 3rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  color: #000000;
+}
+
+.love-hero-quote {
+  font-family: "Cormorant Garamond", "Playfair Display", serif;
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1.35;
+  margin: 0;
+  color: #000000;
+}
+
+/* Filters & Search Section */
+.filter-container {
+  max-width: 1100px;
+  margin: -40px auto 40px auto;
+  position: relative;
+  z-index: 10;
+  background: #ffffff;
+  border: 1px solid rgba(220, 200, 180, 0.4);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+.search-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.search-bar input {
+  flex: 1;
+  background: #f5f4f0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px 18px;
+  border-radius: 8px;
+  color: #1e1b18;
+  font-size: 0.95rem;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: #b8860b;
+  background: #ffffff;
+}
+
+.btn-search {
+  background: #b8860b;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-pills select {
+  background: #f5f4f0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #444;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-reset {
+  background: transparent;
+  border: none;
+  color: #777;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.btn-reset:hover {
+  color: #000;
+}
+
+/* Astrologers Section */
+.astrologer-grid-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px 80px 20px;
+}
+
+.section-title-row {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.section-title-row .sub-title {
+  color: #b8860b;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  font-weight: 600;
+}
+
+.section-title-row h2 {
+  font-size: 2rem;
+  margin: 8px 0;
+  font-family: "Cinzel", serif;
+  color: #1e1b18;
+}
+
+.section-title-row p {
+  color: #635653;
+  font-size: 0.95rem;
+}
+
+.status-message {
+  text-align: center;
+  padding: 40px;
+  color: #777;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.astro-card {
+  background: #ffffff;
+  border: 1px solid rgba(220, 200, 180, 0.4);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.astro-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(184, 134, 11, 0.5);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.astro-card-top {
+  display: flex;
+  gap: 16px;
+}
+
+.astro-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.astro-info {
+  flex: 1;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.status-badge.online {
+  color: #2e7d32;
+}
+
+.status-badge.busy {
+  color: #ed6c02;
+}
+
+.astro-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1e1b18;
+}
+
+.astro-title {
+  font-size: 0.8rem;
+  color: #635653;
+  margin: 2px 0 6px 0;
+}
+
+.astro-rating {
+  font-size: 0.85rem;
+  color: #b8860b;
+  margin: 0;
+}
+
+.astro-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.astro-tags .tag {
+  background: #f5f4f0;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.astro-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.price {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e1b18;
+}
+
+.btn-book-session {
+  background: rgba(184, 134, 11, 0.15);
+  color: #b8860b;
+  border: 1px solid rgba(184, 134, 11, 0.4);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-book-session:hover {
+  background: #b8860b;
+  color: #ffffff;
+}
+
+@media (max-width: 868px) {
+  .site-header {
+    padding: 0 1.2rem;
+  }
+
+  .nav-menu-pill {
+    display: none;
+  }
+
+  .header-left,
+  .header-right {
+    flex: initial;
+  }
+
+  .love-hero-overlay {
+    padding-top: 110px;
+  }
+
+  .love-hero-title {
+    font-size: 2.1rem;
+  }
+
+  .love-hero-quote {
+    font-size: 1.25rem;
+  }
+
+  .filter-container {
+    margin-top: 20px;
+  }
+}

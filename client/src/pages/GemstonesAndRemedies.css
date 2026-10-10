@@ -1,0 +1,133 @@
+/* Outer Page Container */
+.gemstones-page-container {
+  background-color: #f7f4ee;
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  color: #1c1917;
+  width: 100%;
+}
+
+/* Full Width Hero Wrapper */
+.gemstones-hero-wrapper {
+  width: 100%;
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+  border-radius: 0;
+  padding: 24px 5% 70px 5%;
+  margin-top: 0;
+  margin-bottom: 32px;
+  box-sizing: border-box;
+}
+
+/* Header Styling within Hero */
+.gemstones-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 40px;
+  width: 100%;
+}
+
+.btn-top-book {
+  background-color: #242b26;
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-top-book:hover {
+  opacity: 0.9;
+}
+
+/* Text Content Overlay on Left Side */
+.hero-overlay-content {
+  max-width: 500px;
+  padding-top: 20px;
+}
+
+.hero-subheading {
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  color: #706861;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.hero-main-title {
+  font-family: "Playfair Display", "Cinzel", serif;
+  font-size: 3.5rem;
+  line-height: 1.12;
+  color: #1f1b18;
+  margin: 0 0 20px 0;
+  font-weight: 400;
+}
+
+.hero-description {
+  font-size: 0.98rem;
+  color: #59534c;
+  line-height: 1.55;
+  margin-bottom: 32px;
+  max-width: 440px;
+}
+
+.btn-hero-book {
+  background-color: #242b26;
+  color: #ffffff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-hero-book:hover {
+  opacity: 0.9;
+}
+
+/* Body Content Inner Container */
+.gemstones-body-content {
+  padding: 0 5%;
+}
+
+/* Category Filter Pills */
+.category-pill {
+  background: #f5f4f0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #444;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-pill.active,
+.category-pill:hover {
+  background: #1e1b18;
+  color: #ffffff;
+  border-color: #1e1b18;
+}
+
+/* Mobile & Responsive Adjustments */
+@media (max-width: 900px) {
+  .gemstones-hero-wrapper {
+    padding: 20px 4% 40px 4%;
+    background-position: center;
+  }
+
+  .hero-main-title {
+    font-size: 2.6rem;
+  }
+}

@@ -1,0 +1,344 @@
+/* Outer Page Container */
+.vastu-page-container {
+  background-color: #f7f4ee;
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  color: #1c1917;
+  width: 100%;
+}
+
+/* Edge-to-Edge Hero Container */
+.vastu-hero-wrapper {
+  width: 100%;
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+  padding: 24px 5% 70px 5%;
+  margin-top: 0;
+  margin-bottom: 32px;
+  box-sizing: border-box;
+}
+
+/* Header Styling within Hero */
+.vastu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 40px;
+  width: 100%;
+}
+
+.btn-top-book {
+  background-color: #242b26;
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-top-book:hover {
+  opacity: 0.9;
+}
+
+/* Text Content Overlay on Left Side */
+.hero-overlay-content {
+  max-width: 520px;
+  padding-top: 20px;
+}
+
+.hero-subheading {
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  color: #706861;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.hero-main-title {
+  font-family: "Playfair Display", "Cinzel", serif;
+  font-size: 3.5rem;
+  line-height: 1.12;
+  color: #1f1b18;
+  margin: 0 0 20px 0;
+  font-weight: 400;
+}
+
+.hero-description {
+  font-size: 0.98rem;
+  color: #59534c;
+  line-height: 1.55;
+  margin-bottom: 32px;
+  max-width: 460px;
+}
+
+.hero-cta-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.btn-hero-book {
+  background-color: #242b26;
+  color: #ffffff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-hero-book:hover {
+  opacity: 0.9;
+}
+
+.btn-hero-secondary {
+  background-color: transparent;
+  color: #242b26;
+  border: 1px solid #242b26;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-hero-secondary:hover {
+  background-color: rgba(36, 43, 38, 0.05);
+}
+
+/* Body Content Inner Container */
+.vastu-body-content {
+  padding: 0 5% 60px 5%;
+}
+
+/* Category Filter Pills */
+.category-pill {
+  background: #f5f4f0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #444;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-pill.active,
+.category-pill:hover {
+  background: #1e1b18;
+  color: #ffffff;
+  border-color: #1e1b18;
+}
+
+/* Centered & Properly Spaced Section Header Below Search Bar */
+.section-title-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: 48px;
+  margin-bottom: 36px;
+  width: 100%;
+}
+
+.section-subheading {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: #706861;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.section-main-heading {
+  font-family: "Playfair Display", "Cinzel", serif;
+  font-size: 2.2rem;
+  color: #1f1b18;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Consultants Grid */
+.consultants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+.consultant-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-header {
+  display: flex;
+  gap: 16px;
+}
+
+.avatar-wrapper {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1f1b18;
+}
+
+.name-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.status-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.status-pill.available {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.status-pill.busy {
+  background-color: #fce8e6;
+  color: #c5221f;
+}
+
+.status-pill.today {
+  background-color: #fef7e0;
+  color: #b06000;
+}
+
+.expertise-tags {
+  font-size: 0.82rem;
+  color: #666;
+  margin: 6px 0 12px 0;
+}
+
+.meta-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meta-item.rating {
+  margin-top: 4px;
+  font-weight: 600;
+  color: #1f1b18;
+}
+
+.star-icon {
+  color: #f59e0b;
+}
+
+.review-count {
+  font-weight: 400;
+  color: #777;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.price-amount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f1b18;
+}
+
+.price-unit {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-secondary-action {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary-action {
+  background-color: #242b26;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+  .vastu-hero-wrapper {
+    padding: 20px 4% 40px 4%;
+  }
+
+  .hero-main-title {
+    font-size: 2.5rem;
+  }
+
+  .section-main-heading {
+    font-size: 1.8rem;
+  }
+
+  .consultants-grid {
+    grid-template-columns: 1fr;
+  }
+}
