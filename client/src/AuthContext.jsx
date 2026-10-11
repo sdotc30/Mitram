@@ -26,10 +26,21 @@ export function AuthProvider({ children }) {
   };
 
   const loginAsGuest = async () => {
-    return await guestLoginService();
+    const result = await guestLoginService();
+    if (result && result.user) {
+      // Purge any residual guest storage so guest sessions always start fresh with blank details
+      localStorage.removeItem(`user_details_${result.user.uid}`);
+      localStorage.removeItem(`profile_completed_${result.user.uid}`);
+    }
+    return result;
   };
 
   const logout = async () => {
+    if (currentUser && currentUser.isAnonymous) {
+      // Clean up temporary guest records immediately upon logging out
+      localStorage.removeItem(`user_details_${currentUser.uid}`);
+      localStorage.removeItem(`profile_completed_${currentUser.uid}`);
+    }
     return await logoutService();
   };
 

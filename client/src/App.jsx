@@ -78,6 +78,17 @@ export default function App() {
 
   useEffect(() => {
     if (currentUser) {
+      // If user is a guest, force blank fields and prompt onboarding modal immediately
+      if (currentUser.isAnonymous) {
+        setProfileFullName("");
+        setDob("");
+        setTimeOfBirth("");
+        setPlaceOfBirth("");
+        setGender("");
+        setIsDetailsModalOpen(true);
+        return;
+      }
+
       const savedDetails = localStorage.getItem(
         `user_details_${currentUser.uid}`,
       );
@@ -100,10 +111,15 @@ export default function App() {
         setProfileFullName(currentUser.displayName);
       }
 
-      if (!hasCompletedProfile && !currentUser.isAnonymous) {
+      if (!hasCompletedProfile) {
         setIsDetailsModalOpen(true);
       }
     } else {
+      setProfileFullName("");
+      setDob("");
+      setTimeOfBirth("");
+      setPlaceOfBirth("");
+      setGender("");
       setIsDetailsModalOpen(false);
     }
   }, [currentUser]);
@@ -318,6 +334,7 @@ export default function App() {
       icon: iconKundli,
       badge: "Popular",
       pageKey: "kundli-and-birth-chart",
+      btnText: "Get Free Kundli & Consultation",
     },
     {
       title: "Love & Compatibility",
@@ -325,6 +342,7 @@ export default function App() {
       icon: iconLove,
       badge: "Relationships",
       pageKey: "love-and-compatibility",
+      btnText: "Book Session",
     },
     {
       title: "Career & Wealth",
@@ -332,6 +350,7 @@ export default function App() {
       icon: iconCareer,
       badge: "Growth",
       pageKey: "career-and-wealth",
+      btnText: "Book Session",
     },
     {
       title: "Gemstones & Remedies",
@@ -339,6 +358,7 @@ export default function App() {
       icon: iconRemedies,
       badge: "Balance",
       pageKey: "gemstones-and-remedies",
+      btnText: "Book Session",
     },
     {
       title: "Vastu & Living Spaces",
@@ -346,6 +366,7 @@ export default function App() {
       icon: iconVastu,
       badge: "Home",
       pageKey: "vastu-and-living-spaces",
+      btnText: "Book Session",
     },
     {
       title: "Judgment-Free Space",
@@ -353,6 +374,7 @@ export default function App() {
       icon: iconSpace,
       badge: "Safe Space",
       pageKey: "judgment-free-space",
+      btnText: "Book Session",
     },
   ];
 
@@ -394,7 +416,6 @@ export default function App() {
     })),
   ];
 
-  // Shell Layout Wrapper for All Category Pages
   const renderSubPage = (PageComponent) => (
     <>
       <div
@@ -478,7 +499,6 @@ export default function App() {
         setIsDetailsModalOpen={setIsDetailsModalOpen}
       />
 
-      {/* User Onboarding & Birth Details Modal for Subpages */}
       {isDetailsModalOpen && (
         <div
           className="auth-modal-overlay"
@@ -574,7 +594,6 @@ export default function App() {
     </>
   );
 
-  // Router Dispatcher for Specific Page Views
   if (currentPage === "kundli-and-birth-chart") {
     return renderSubPage(KundliAndBirthChart);
   }
@@ -596,7 +615,6 @@ export default function App() {
 
   return (
     <div className="landing-container">
-      {/* Slide-out Sidebar Drawer & Overlay */}
       <div
         className={`sidebar-overlay ${isSidebarOpen ? "open" : ""}`}
         onClick={() => setIsSidebarOpen(false)}
@@ -901,7 +919,7 @@ export default function App() {
                   handleBookingClick(e, cat.pageKey);
                 }}
               >
-                Book Session
+                {cat.btnText}
               </button>
             </div>
           ))}
@@ -1016,7 +1034,6 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Auth Modal */}
       {isAuthOpen && (
         <div className="auth-modal-overlay" onClick={closeAuth}>
           <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -1158,7 +1175,6 @@ export default function App() {
         </div>
       )}
 
-      {/* User Onboarding & Birth Details Modal for Landing Page */}
       {isDetailsModalOpen && (
         <div
           className="auth-modal-overlay"

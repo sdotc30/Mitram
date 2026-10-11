@@ -1,70 +1,46 @@
 // client/src/services/apiPool.js
 
-// Retrieve Vite environment variables
-const API_KEY_POOL = [
-  import.meta.env.VITE_NAVAMSHA_API_KEY,
-  import.meta.env.VITE_PROKERALA_CLIENT_ID,
-  import.meta.env.VITE_FREEASTROLOGY_API_KEY,
-].filter(Boolean);
+const NAVAMSHA_KEY = import.meta.env.VITE_NAVAMSHA_API_KEY;
+const PROKERALA_CLIENT_ID = import.meta.env.VITE_PROKERALA_CLIENT_ID;
+const PROKERALA_CLIENT_SECRET = import.meta.env.VITE_PROKERALA_CLIENT_SECRET;
 
-// Memory tracker for exhausted keys during the user session
 const exhaustedKeys = new Set();
 
-function getAvailableKey() {
-  const activeKeys = API_KEY_POOL.filter((key) => !exhaustedKeys.has(key));
-  return activeKeys.length > 0 ? activeKeys[0] : null;
-}
-
 /**
- * Rotates through the key pool if a provider returns HTTP 429 (Rate Limit) or 403 (Quota Exceeded)
+ * Executes requests against Navamsha API using key pool rotation
  */
-export async function fetchWithPool(endpointBuilderFn) {
-  let attempts = 0;
-  const maxAttempts = API_KEY_POOL.length;
-
-  if (maxAttempts === 0) {
-    throw new Error("NO_KEYS_CONFIGURED");
+export async function fetchFromNavamshaPool(endpointPath, payload) {
+  if (!NAVAMSHA_KEY) {
+    throw new Error("NO_NAVAMSHA_KEY_CONFIGURED");
   }
 
-  while (attempts < maxAttempts) {
-    const currentKey = getAvailableKey();
-
-    if (!currentKey) {
-      throw new Error("ALL_KEYS_EXHAUSTED");
-    }
-
-    try {
-      const url = endpointBuilderFn(currentKey);
-      const response = await fetch(url);
-
-      if (response.status === 429 || response.status === 403) {
-        console.warn(
-          `Key ...${currentKey.slice(-4)} exhausted (HTTP ${response.status}). Rotating key.`,
-        );
-        exhaustedKeys.add(currentKey);
-        attempts++;
-        continue;
-      }
-
-      if (!response.ok) {
-        throw new Error(`API HTTP Error: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (err) {
-      if (
-        err.message === "ALL_KEYS_EXHAUSTED" ||
-        err.message === "NO_KEYS_CONFIGURED"
-      ) {
-        throw err;
-      }
-      console.warn("Network error during pool fetch, trying next key:", err);
-      exhaustedKeys.add(currentKey);
-      attempts++;
-    }
+  if (exhaustedKeys.has(NAVAMSHA_KEY)) {
+    throw new Error("NAVAMSHA_KEY_EXHAUSTED");
   }
 
-  throw new Error("ALL_KEYS_EXHAUSTED");
+  try {
+    const response = await fetch(`https://api.navamsha.in${endpointPath}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${NAVAMSHA_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.status === 429 || response.status === 403) {
+      exhaustedKeys.add(NAVAMSHA_KEY);
+      throw new Error(`Navamsha HTTP Error: ${response.status}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Navamsha API HTTP Error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (err) {
+    throw err;
+  }
 }
 
 export function resetKeyPool() {

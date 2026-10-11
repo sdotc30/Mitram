@@ -239,6 +239,7 @@
 
 .summary-actions-row {
   display: flex;
+  align-items: center;
   gap: 0.75rem;
 }
 
@@ -333,6 +334,38 @@
   border-radius: 18px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+/* Tab visibility management on screen */
+.hidden-screen-tab {
+  display: none !important;
+}
+
+.active-screen-tab {
+  display: block !important;
+}
+
+.print-section-title {
+  display: none;
+}
+
+.btn-download-pdf {
+  background: #b57a2a;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.8rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-download-pdf:hover {
+  background: #96631f;
+  transform: translateY(-1px);
 }
 
 /* Chart SVG & Diagram */
@@ -621,5 +654,52 @@
   }
   .chart-diagram-wrapper {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Full PDF Print Stylesheet (Overrides tab hiding to print ALL 4 sections) */
+@media print {
+  .no-print,
+  .kundli-hero-wrapper,
+  .chart-tabs-header,
+  .consultants-section {
+    display: none !important;
+  }
+
+  body,
+  .kundli-page-container {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .birth-summary-card,
+  .chart-viewer-section {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Force display of ALL sections during print regardless of active tab */
+  .print-section {
+    display: block !important;
+    page-break-after: always;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px dashed #cccccc;
+  }
+
+  .print-section:last-child {
+    page-break-after: auto;
+    border-bottom: none;
+  }
+
+  .print-section-title {
+    display: block !important;
+    font-family: Georgia, serif;
+    font-size: 1.4rem;
+    color: #2c2523;
+    margin: 0 0 1.2rem 0;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #b57a2a;
   }
 }
