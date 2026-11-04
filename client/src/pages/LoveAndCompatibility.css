@@ -1,6 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap");
 
-/* Main Page Container */
 .love-page-wrapper {
   width: 100%;
   min-height: 100vh;
@@ -19,7 +18,6 @@
   width: 100%;
 }
 
-/* Header & Balanced Alignment */
 .site-header {
   position: absolute;
   top: 1.2rem;
@@ -56,7 +54,6 @@
   position: relative;
 }
 
-/* Hamburger Toggle Button */
 .hamburger-toggle-btn {
   display: flex;
   align-items: center;
@@ -94,7 +91,6 @@
   cursor: pointer;
 }
 
-/* Logo Sizing */
 .header-logo-only {
   height: 36px;
   width: auto;
@@ -102,7 +98,6 @@
   display: block;
 }
 
-/* Center Nav Pill */
 .nav-menu-pill {
   display: flex;
   gap: 2rem;
@@ -151,7 +146,6 @@
   transform: translateY(-1px);
 }
 
-/* Profile Pill Header Styling */
 .user-profile-wrapper {
   position: relative;
 }
@@ -270,7 +264,6 @@
   background: #fce8e6;
 }
 
-/* Hero Section Base */
 .love-hero-section {
   width: 100%;
   min-height: 88vh;
@@ -296,7 +289,6 @@
   text-align: center;
 }
 
-/* Hero Text Styling */
 .love-hero-title {
   font-family: "Cinzel", "Playfair Display", serif;
   font-size: 3rem;
@@ -317,7 +309,6 @@
   color: #000000;
 }
 
-/* Filters & Search Section */
 .filter-container {
   max-width: 1100px;
   margin: -40px auto 40px auto;
@@ -391,7 +382,6 @@
   color: #000;
 }
 
-/* Astrologers Section */
 .astrologer-grid-section {
   max-width: 1200px;
   margin: 0 auto;
@@ -428,127 +418,180 @@
   color: #777;
 }
 
+/* --- ASTROLOGER CARD matching reference --- */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 28px;
 }
 
 .astro-card {
   background: #ffffff;
-  border: 1px solid rgba(220, 200, 180, 0.4);
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   transition:
     transform 0.2s ease,
-    border-color 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 .astro-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(184, 134, 11, 0.5);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
 }
 
-.astro-card-top {
+/* Header Row: Left-aligned avatar + name, Far-right status badge */
+.astro-card-header {
   display: flex;
-  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.astro-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .astro-img {
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   object-fit: cover;
 }
 
-.astro-info {
-  flex: 1;
+.astro-header-left h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e1b18;
 }
 
 .status-badge {
   font-size: 0.75rem;
   font-weight: 600;
-  display: inline-block;
-  margin-bottom: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
 }
 
 .status-badge.online {
+  background: #e8f5e9;
   color: #2e7d32;
 }
 
 .status-badge.busy {
+  background: #fff3e0;
   color: #ed6c02;
 }
 
-.astro-info h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #1e1b18;
-}
-
-.astro-title {
-  font-size: 0.8rem;
-  color: #635653;
-  margin: 2px 0 6px 0;
-}
-
-.astro-rating {
-  font-size: 0.85rem;
-  color: #b8860b;
-  margin: 0;
-}
-
-.astro-tags {
+/* Centered content block matching Pandit Ramachandra reference */
+.astro-card-center {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 16px 0;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 8px 0 16px 0;
 }
 
-.astro-tags .tag {
-  background: #f5f4f0;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  color: #555;
+.astro-subtitle {
+  font-size: 0.82rem;
+  color: #8c7b77;
+  margin: 0 0 12px 0;
 }
 
+.astro-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.astro-meta-item {
+  font-size: 0.85rem;
+  color: #635653;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.astro-meta-item.rating {
+  font-size: 0.88rem;
+  margin-top: 4px;
+}
+
+.meta-icon {
+  font-size: 0.85rem;
+}
+
+.star-icon {
+  color: #b8860b;
+  font-size: 0.95rem;
+}
+
+/* Footer Row: Price tag on left, dual action buttons on right */
 .astro-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
+  padding-top: 16px;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: auto;
 }
 
-.price {
-  font-size: 0.9rem;
-  font-weight: 600;
+.price-tag {
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #1e1b18;
 }
 
-.btn-book-session {
-  background: rgba(184, 134, 11, 0.15);
-  color: #b8860b;
-  border: 1px solid rgba(184, 134, 11, 0.4);
-  padding: 8px 16px;
-  border-radius: 6px;
+.price-tag small {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #8c7b77;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-view-profile {
+  background: #f5f4f0;
+  color: #59534c;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 8px 18px;
+  border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.btn-book-session:hover {
-  background: #b8860b;
+.btn-view-profile:hover {
+  background: #e2dfd7;
+  color: #1e1b18;
+}
+
+.btn-consult-now {
+  background: #1e1b18;
   color: #ffffff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-consult-now:hover {
+  background: #38322e;
 }
 
 @media (max-width: 868px) {
@@ -560,24 +603,18 @@
     display: none;
   }
 
-  .header-left,
-  .header-right {
-    flex: initial;
+  .cards-grid {
+    grid-template-columns: 1fr;
   }
 
-  .love-hero-overlay {
-    padding-top: 110px;
+  .astro-card-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
   }
 
-  .love-hero-title {
-    font-size: 2.1rem;
-  }
-
-  .love-hero-quote {
-    font-size: 1.25rem;
-  }
-
-  .filter-container {
-    margin-top: 20px;
+  .button-group {
+    width: 100%;
+    justify-content: space-between;
   }
 }

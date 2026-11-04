@@ -1,60 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./LoveAndCompatibility.css";
 
 import logoImg from "../assets/logo.png";
 import loveHeroBg from "../assets/love-hero-bg.png";
 import { useAuth } from "../AuthContext";
-
-// Local Mock Data to bypass backend requirement for UI design phase
-const MOCK_ASTROLOGERS = [
-  {
-    id: 1,
-    name: "Astro Ramesh",
-    title: "Vedic & Synastry Expert",
-    rating: 4.9,
-    reviews: 128,
-    status: "Available Now",
-    price: 499,
-    tags: ["Love", "Marriage", "Vedic"],
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: 2,
-    name: "Priya Sharma",
-    title: "Relationship & Tarot Reader",
-    rating: 4.8,
-    reviews: 95,
-    status: "Available Now",
-    price: 399,
-    tags: ["Tarot", "Soulmate", "Numerology"],
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: 3,
-    name: "Dr. K. V. Shastri",
-    title: "Kundali Matching Specialist",
-    rating: 5.0,
-    reviews: 210,
-    status: "Busy",
-    price: 699,
-    tags: ["Kundali", "Compatibility", "Remedies"],
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
-  },
-];
+import { fetchAstrologers } from "../services/astrologerService";
 
 export default function LoveAndCompatibility({
   onBack,
   onOpenAuth,
   onOpenSidebar,
   userProfile,
+  onViewAstrologerProfile,
 }) {
   const { currentUser, logout } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  const [astrologersList, setAstrologersList] = useState([]);
+  const [isLoadingAstrologers, setIsLoadingAstrologers] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadLoveExperts() {
+      setIsLoadingAstrologers(true);
+      try {
+        const data = await fetchAstrologers("LOVE");
+        if (isMounted) {
+          setAstrologersList(data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load love & compatibility astrologers:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingAstrologers(false);
+        }
+      }
+    }
+    loadLoveExperts();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const getUserDisplayName = () => {
     const savedName = localStorage.getItem("userName");
@@ -80,17 +68,19 @@ export default function LoveAndCompatibility({
     return name[0].toUpperCase();
   };
 
-  const filteredAstrologers = MOCK_ASTROLOGERS.filter(
-    (astro) =>
-      astro.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      astro.title.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredAstrologers = astrologersList.filter((astro) => {
+    const query = searchQuery.toLowerCase();
+    const nameMatch = astro.name?.toLowerCase().includes(query);
+    const titleMatch = (astro.category || "").toLowerCase().includes(query);
+    const expertiseMatch = Array.isArray(astro.expertise)
+      ? astro.expertise.some((e) => e.toLowerCase().includes(query))
+      : false;
+    return nameMatch || titleMatch || expertiseMatch;
+  });
 
   return (
     <div className="love-page-wrapper">
-      {/* Top Hero Container */}
       <div className="love-hero-wrapper">
-        {/* Full-Width Site Header */}
         <header className="site-header">
           <div className="header-left">
             <button
@@ -186,7 +176,6 @@ export default function LoveAndCompatibility({
           </div>
         </header>
 
-        {/* Hero Section */}
         <section
           className="love-hero-section"
           style={{ backgroundImage: `url(${loveHeroBg})` }}
@@ -206,7 +195,6 @@ export default function LoveAndCompatibility({
         </section>
       </div>
 
-      {/* Filters & Search Section */}
       <section className="filter-container">
         <div className="search-bar">
           <input
@@ -237,53 +225,99 @@ export default function LoveAndCompatibility({
         </div>
       </section>
 
-      {/* Astrologers Section */}
       <section className="astrologer-grid-section">
         <div className="section-title-row">
           <span className="sub-title">EXPERT ASTROLOGERS</span>
-          <h2>Find Your Guide</h2>
+          <h2>FIND YOUR GUIDE</h2>
           <p>
             Connect with experienced astrologers specializing in love,
             relationships, and compatibility.
           </p>
         </div>
 
-        <div className="cards-grid">
-          {filteredAstrologers.map((astro) => (
-            <div key={astro.id} className="astro-card">
-              <div className="astro-card-top">
-                <img src={astro.image} alt={astro.name} className="astro-img" />
-                <div className="astro-info">
+        {isLoadingAstrologers ? (
+          <div className="status-message">
+            Loading verified love specialists...
+          </div>
+        ) : filteredAstrologers.length === 0 ? (
+          <div className="status-message">
+            No relationship specialists available for this category right now.
+          </div>
+        ) : (
+          <div className="cards-grid">
+            {filteredAstrologers.map((astro) => (
+              <div key={astro.id} className="astro-card">
+                <div className="astro-card-header">
+                  <div className="astro-header-left">
+                    <img
+                      src={astro.image}
+                      alt={astro.name}
+                      className="astro-img"
+                    />
+                    <h3>{astro.name}</h3>
+                  </div>
                   <span
                     className={`status-badge ${
-                      astro.status === "Available Now" ? "online" : "busy"
+                      (astro.status_type || astro.statusType || "available") ===
+                      "available"
+                        ? "online"
+                        : "busy"
                     }`}
                   >
-                    ● {astro.status}
+                    • {astro.status || "Online Now"}
                   </span>
-                  <h3>{astro.name}</h3>
-                  <p className="astro-title">{astro.title}</p>
-                  <p className="astro-rating">
-                    ★ {astro.rating} ({astro.reviews} reviews)
+                </div>
+
+                <div className="astro-card-center">
+                  <p className="astro-subtitle">
+                    {Array.isArray(astro.expertise)
+                      ? astro.expertise.join(" • ")
+                      : astro.category ||
+                        "Birth Chart Analysis • Vedic Remedies"}
                   </p>
+
+                  <div className="astro-meta-list">
+                    <p className="astro-meta-item">
+                      <span className="meta-icon">💼</span>{" "}
+                      {astro.experience || "14+"} Years Experience
+                    </p>
+                    <p className="astro-meta-item">
+                      <span className="meta-icon">🌐</span>{" "}
+                      {Array.isArray(astro.languages)
+                        ? astro.languages.join(", ")
+                        : astro.languages || "Hindi, English"}
+                    </p>
+                    <p className="astro-meta-item rating">
+                      <span className="star-icon">★</span>{" "}
+                      <strong>{astro.rating || "4.90"}</strong> (
+                      {astro.reviews_count || "890+"} reviews)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="astro-card-footer">
+                  <div className="price-tag">
+                    ₹{" "}
+                    <strong>
+                      {astro.price_per_min || astro.pricePerMin || 70}
+                    </strong>{" "}
+                    <small>/ min</small>
+                  </div>
+
+                  <button
+                    className="btn-consult-now"
+                    onClick={() =>
+                      onViewAstrologerProfile &&
+                      onViewAstrologerProfile(astro.id)
+                    }
+                  >
+                    Consult Now
+                  </button>
                 </div>
               </div>
-              <div className="astro-tags">
-                {astro.tags?.map((tag, i) => (
-                  <span key={i} className="tag">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="astro-card-footer">
-                <span className="price">₹ {astro.price} / session</span>
-                <button className="btn-book-session">
-                  Book Session &rarr;
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

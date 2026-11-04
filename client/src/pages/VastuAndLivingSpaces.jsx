@@ -1,103 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./VastuAndLivingSpaces.css";
 
 import logoImg from "../assets/logo.png";
 import vastuHeroBg from "../assets/vastu-hero.png";
 import { useAuth } from "../AuthContext";
-
-// Vastu Consultants Data
-const MOCK_VASTU_CONSULTANTS = [
-  {
-    id: 1,
-    name: "Dr. Ananya Sharma",
-    status: "Available Now",
-    statusType: "available",
-    expertise: ["Home Vastu", "Office Vastu", "Space Energy"],
-    category: "Home Vastu",
-    experience: "8+ Years",
-    languages: ["Hindi", "English"],
-    rating: "4.9",
-    reviewsCount: "320+",
-    pricePerMin: 60,
-    image:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 2,
-    name: "Acharya Rohan Mehta",
-    status: "Available Now",
-    statusType: "available",
-    expertise: ["Floor Plan Analysis", "Residential Vastu", "Remedies"],
-    category: "Floor Plan Analysis",
-    experience: "12+ Years",
-    languages: ["Hindi", "English", "Gujarati"],
-    rating: "4.8",
-    reviewsCount: "410+",
-    pricePerMin: 80,
-    image:
-      "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 3,
-    name: "Shalini Iyer",
-    status: "Available Now",
-    statusType: "available",
-    expertise: ["Home Vastu", "Interior Alignment", "Element Balancing"],
-    category: "Home Vastu",
-    experience: "6+ Years",
-    languages: ["English", "Hindi", "Tamil"],
-    rating: "4.9",
-    reviewsCount: "280+",
-    pricePerMin: 50,
-    image:
-      "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 4,
-    name: "Dr. Vivek Rao",
-    status: "In Session",
-    statusType: "busy",
-    expertise: ["Commercial Vastu", "Business Growth", "Space Planning"],
-    category: "Office Vastu",
-    experience: "15+ Years",
-    languages: ["English", "Hindi"],
-    rating: "4.8",
-    reviewsCount: "500+",
-    pricePerMin: 100,
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 5,
-    name: "Meera Kulkarni",
-    status: "Available Today",
-    statusType: "today",
-    expertise: ["Home Vastu", "Land & Plot Analysis", "Remedies"],
-    category: "Remedies & Energy",
-    experience: "9+ Years",
-    languages: ["Marathi", "Hindi", "English"],
-    rating: "4.9",
-    reviewsCount: "310+",
-    pricePerMin: 70,
-    image:
-      "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 6,
-    name: "Karan Malhotra",
-    status: "Available Today",
-    statusType: "today",
-    expertise: ["Office Vastu", "Workspace Design", "Energy Alignment"],
-    category: "Office Vastu",
-    experience: "7+ Years",
-    languages: ["English", "Hindi", "Punjabi"],
-    rating: "4.7",
-    reviewsCount: "200+",
-    pricePerMin: 65,
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60",
-  },
-];
+import { fetchAstrologers } from "../services/astrologerService";
 
 export default function VastuAndLivingSpaces({
   onBack,
@@ -110,6 +17,34 @@ export default function VastuAndLivingSpaces({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  // Live backend consultants state for 'VASTU' category
+  const [consultantsList, setConsultantsList] = useState([]);
+  const [isLoadingConsultants, setIsLoadingConsultants] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadVastuExperts() {
+      setIsLoadingConsultants(true);
+      try {
+        // Fetch only astrologers tagged with the 'VASTU' category code
+        const data = await fetchAstrologers("VASTU");
+        if (isMounted) {
+          setConsultantsList(data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load vastu consultants:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingConsultants(false);
+        }
+      }
+    }
+    loadVastuExperts();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const getUserDisplayName = () => {
     const savedName = localStorage.getItem("userName");
@@ -140,18 +75,28 @@ export default function VastuAndLivingSpaces({
     setSelectedCategory("All");
   };
 
-  const filteredConsultants = MOCK_VASTU_CONSULTANTS.filter((consultant) => {
+  const filteredConsultants = consultantsList.filter((consultant) => {
+    const categories = consultant.categories || [];
+    const expertise = consultant.expertise || [];
+    const languages = consultant.languages || [];
+
     const matchesCategory =
       selectedCategory === "All" ||
-      consultant.category === selectedCategory ||
-      consultant.expertise.includes(selectedCategory);
+      categories.includes(selectedCategory) ||
+      (consultant.category &&
+        consultant.category
+          .toLowerCase()
+          .includes(selectedCategory.toLowerCase())) ||
+      expertise.some((e) =>
+        e.toLowerCase().includes(selectedCategory.toLowerCase()),
+      );
 
     const matchesSearch =
       consultant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      consultant.expertise.some((exp) =>
+      expertise.some((exp) =>
         exp.toLowerCase().includes(searchQuery.toLowerCase()),
       ) ||
-      consultant.languages.some((lang) =>
+      languages.some((lang) =>
         lang.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
@@ -332,84 +277,110 @@ export default function VastuAndLivingSpaces({
         </div>
 
         {/* Consultants Grid */}
-        <section className="consultants-grid">
-          {filteredConsultants.map((consultant) => (
-            <div key={consultant.id} className="consultant-card">
-              <div className="card-header">
-                <div className="avatar-wrapper">
-                  <img src={consultant.image} alt={consultant.name} />
-                </div>
-                <div className="header-info">
-                  <div className="name-status-row">
-                    <h3>{consultant.name}</h3>
-                    <span className={`status-pill ${consultant.statusType}`}>
-                      • {consultant.status}
-                    </span>
+        {isLoadingConsultants ? (
+          <div
+            style={{ textAlign: "center", padding: "3rem", color: "#8a7e78" }}
+          >
+            Loading Vastu consultants...
+          </div>
+        ) : filteredConsultants.length === 0 ? (
+          <div
+            style={{ textAlign: "center", padding: "3rem", color: "#8a7e78" }}
+          >
+            No Vastu experts available for this filter right now.
+          </div>
+        ) : (
+          <section className="consultants-grid">
+            {filteredConsultants.map((consultant) => (
+              <div key={consultant.id} className="consultant-card">
+                <div className="card-header">
+                  <div className="avatar-wrapper">
+                    <img src={consultant.image} alt={consultant.name} />
                   </div>
-                  <p className="expertise-tags">
-                    {consultant.expertise.join(" • ")}
-                  </p>
-                  <div className="meta-info-row">
-                    <span className="meta-item">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                  <div className="header-info">
+                    <div className="name-status-row">
+                      <h3>{consultant.name}</h3>
+                      <span
+                        className={`status-pill ${consultant.status_type || consultant.statusType || "available"}`}
                       >
-                        <rect
-                          x="2"
-                          y="7"
-                          width="20"
-                          height="14"
-                          rx="2"
-                          ry="2"
-                        />
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                      </svg>
-                      {consultant.experience} Experience
-                    </span>
-                    <span className="meta-item">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="2" y1="12" x2="22" y2="12" />
-                      </svg>
-                      {consultant.languages.join(", ")}
-                    </span>
-                    <span className="meta-item rating">
-                      <span className="star-icon">★</span> {consultant.rating}
-                      <span className="review-count">
-                        ({consultant.reviewsCount} reviews)
+                        • {consultant.status}
                       </span>
+                    </div>
+                    <p className="expertise-tags">
+                      {Array.isArray(consultant.expertise)
+                        ? consultant.expertise.join(" • ")
+                        : consultant.expertise}
+                    </p>
+                    <div className="meta-info-row">
+                      <span className="meta-item">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <rect
+                            x="2"
+                            y="7"
+                            width="20"
+                            height="14"
+                            rx="2"
+                            ry="2"
+                          />
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                        </svg>
+                        {consultant.experience} Experience
+                      </span>
+                      <span className="meta-item">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                        </svg>
+                        {Array.isArray(consultant.languages)
+                          ? consultant.languages.join(", ")
+                          : consultant.languages}
+                      </span>
+                      <span className="meta-item rating">
+                        <span className="star-icon">★</span> {consultant.rating}
+                        <span className="review-count">
+                          (
+                          {consultant.reviews_count ||
+                            consultant.reviewsCount ||
+                            "100+"}{" "}
+                          reviews)
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card-footer">
+                  <div className="price-tag">
+                    <span className="price-amount">
+                      ₹ {consultant.price_per_min || consultant.pricePerMin}
                     </span>
+                    <span className="price-unit">/min</span>
+                  </div>
+                  <div className="action-btns">
+                    <button className="btn-secondary-action">
+                      View Profile
+                    </button>
+                    <button className="btn-primary-action">Book Session</button>
                   </div>
                 </div>
               </div>
-
-              <div className="card-footer">
-                <div className="price-tag">
-                  <span className="price-amount">
-                    ₹ {consultant.pricePerMin}
-                  </span>
-                  <span className="price-unit">/min</span>
-                </div>
-                <div className="action-btns">
-                  <button className="btn-secondary-action">View Profile</button>
-                  <button className="btn-primary-action">Book Session</button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </section>
+            ))}
+          </section>
+        )}
       </div>
     </div>
   );

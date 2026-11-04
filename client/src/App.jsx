@@ -12,6 +12,7 @@ import GemstonesAndRemedies from "./pages/GemstonesAndRemedies";
 import VastuAndLivingSpaces from "./pages/VastuAndLivingSpaces";
 import JudgementFreeZone from "./pages/JudgementFreeZone";
 import KundliAndBirthChart from "./pages/KundliAndBirthChart";
+import AstrologerProfilePage from "./pages/AstrologerProfilePage";
 
 // Asset Imports
 import heroBg from "./assets/hero-bg.png";
@@ -32,6 +33,7 @@ export default function App() {
 
   // Page View Routing State
   const [currentPage, setCurrentPage] = useState("home");
+  const [selectedAstrologerId, setSelectedAstrologerId] = useState(null);
 
   // Auth Modal States
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -66,6 +68,12 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const viewAstrologerProfile = (astrologerId) => {
+    setSelectedAstrologerId(astrologerId);
+    setCurrentPage("astrologer-profile");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleBookingClick = (e, pageKey) => {
     if (e && e.preventDefault) e.preventDefault();
 
@@ -78,7 +86,6 @@ export default function App() {
 
   useEffect(() => {
     if (currentUser) {
-      // If user is a guest, force blank fields and prompt onboarding modal immediately
       if (currentUser.isAnonymous) {
         setProfileFullName("");
         setDob("");
@@ -358,7 +365,7 @@ export default function App() {
       icon: iconRemedies,
       badge: "Balance",
       pageKey: "gemstones-and-remedies",
-      btnText: "Book Session",
+      btnText: "Explore Now",
     },
     {
       title: "Vastu & Living Spaces",
@@ -416,7 +423,7 @@ export default function App() {
     })),
   ];
 
-  const renderSubPage = (PageComponent) => (
+  const renderSubPage = (PageComponent, extraProps = {}) => (
     <>
       <div
         className={`sidebar-overlay ${isSidebarOpen ? "open" : ""}`}
@@ -497,6 +504,8 @@ export default function App() {
         userProfile={{ displayName: profileFullName }}
         isDetailsModalOpen={isDetailsModalOpen}
         setIsDetailsModalOpen={setIsDetailsModalOpen}
+        onViewAstrologerProfile={viewAstrologerProfile}
+        {...extraProps}
       />
 
       {isDetailsModalOpen && (
@@ -594,6 +603,13 @@ export default function App() {
     </>
   );
 
+  if (currentPage === "astrologer-profile") {
+    return renderSubPage(AstrologerProfilePage, {
+      astrologerId: selectedAstrologerId,
+      onStartChat: (ast) => alert(`Initiating chat with ${ast.name}`),
+      onStartCall: (ast) => alert(`Initiating voice call with ${ast.name}`),
+    });
+  }
   if (currentPage === "kundli-and-birth-chart") {
     return renderSubPage(KundliAndBirthChart);
   }

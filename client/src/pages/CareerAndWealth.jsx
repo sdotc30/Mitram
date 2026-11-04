@@ -4,70 +4,7 @@ import "./CareerAndWealth.css";
 import logoImg from "../assets/logo.png";
 import careerHeroBg from "../assets/Career-hero.png";
 import { useAuth } from "../AuthContext";
-
-// Mock Career & Wealth Consultants
-const MOCK_CONSULTANTS = [
-  {
-    id: 1,
-    name: "Acharya Vikram",
-    status: "Online Now",
-    statusType: "available",
-    expertise: ["Career Growth", "Financial Timing", "Business Astrology"],
-    category: "Career Guidance",
-    experience: "12+ Years",
-    languages: ["English", "Hindi"],
-    rating: "4.9",
-    reviewsCount: "620+",
-    pricePerMin: 60,
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 2,
-    name: "Dr. Sunita Mehta",
-    status: "Online Now",
-    statusType: "available",
-    expertise: ["Wealth & Investments", "Dasha Timing", "Job Shifts"],
-    category: "Wealth & Finance",
-    experience: "15+ Years",
-    languages: ["Hindi", "English", "Gujarati"],
-    rating: "4.95",
-    reviewsCount: "850+",
-    pricePerMin: 75,
-    image:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 3,
-    name: "Pandit Rajesh Shastri",
-    status: "In Session",
-    statusType: "busy",
-    expertise: ["Business Ventures", "Corporate Astrology", "Wealth Yogas"],
-    category: "Business Strategy",
-    experience: "18+ Years",
-    languages: ["English", "Hindi", "Sanskrit"],
-    rating: "4.88",
-    reviewsCount: "940+",
-    pricePerMin: 80,
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 4,
-    name: "Meera Deshmukh",
-    status: "Available Today",
-    statusType: "today",
-    expertise: ["Promotions", "Foreign Work Prospects", "Financial Remedies"],
-    category: "Career Guidance",
-    experience: "8+ Years",
-    languages: ["English", "Marathi", "Hindi"],
-    rating: "4.85",
-    reviewsCount: "410+",
-    pricePerMin: 50,
-    image:
-      "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&auto=format&fit=crop&q=60",
-  },
-];
+import { fetchAstrologers } from "../services/astrologerService";
 
 export default function CareerAndWealth({
   onBack,
@@ -83,8 +20,36 @@ export default function CareerAndWealth({
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [selectedAvailability, setSelectedAvailability] = useState("All");
 
+  // Live backend consultants state for 'CAREER' category
+  const [consultantsList, setConsultantsList] = useState([]);
+  const [isLoadingConsultants, setIsLoadingConsultants] = useState(true);
+
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileDropdownRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCareerExperts() {
+      setIsLoadingConsultants(true);
+      try {
+        // Fetch only astrologers tagged with the 'CAREER' category code
+        const data = await fetchAstrologers("CAREER");
+        if (isMounted) {
+          setConsultantsList(data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load career & wealth astrologers:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingConsultants(false);
+        }
+      }
+    }
+    loadCareerExperts();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -136,34 +101,48 @@ export default function CareerAndWealth({
     setSelectedAvailability("All");
   };
 
-  const filteredConsultants = MOCK_CONSULTANTS.filter((consultant) => {
+  const filteredConsultants = consultantsList.filter((consultant) => {
+    const categories = consultant.categories || [];
+    const expertise = consultant.expertise || [];
+    const languages = consultant.languages || [];
+    const statusType =
+      consultant.status_type || consultant.statusType || "available";
+    const price = consultant.price_per_min || consultant.pricePerMin || 0;
+
     const matchesCategory =
       selectedCategory === "All" ||
-      consultant.category === selectedCategory ||
-      consultant.expertise.includes(selectedCategory);
+      categories.includes(selectedCategory) ||
+      expertise.includes(selectedCategory);
 
     const matchesLanguage =
-      selectedLanguage === "All" ||
-      consultant.languages.includes(selectedLanguage);
+      selectedLanguage === "All" || languages.includes(selectedLanguage);
+
+    const matchesPrice =
+      selectedPrice === "All" ||
+      (selectedPrice === "under60" && price < 60) ||
+      (selectedPrice === "60to80" && price >= 60 && price <= 80) ||
+      (selectedPrice === "above80" && price > 80);
 
     const matchesAvailability =
       selectedAvailability === "All" ||
-      (selectedAvailability === "Online Now" &&
-        consultant.statusType === "available") ||
-      (selectedAvailability === "Available Today" &&
-        consultant.statusType === "today");
+      (selectedAvailability === "Online Now" && statusType === "available") ||
+      (selectedAvailability === "Available Today" && statusType === "today");
 
     const matchesSearch =
       consultant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      consultant.expertise.some((exp) =>
+      expertise.some((exp) =>
         exp.toLowerCase().includes(searchQuery.toLowerCase()),
       ) ||
-      consultant.languages.some((lang) =>
+      languages.some((lang) =>
         lang.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
     return (
-      matchesCategory && matchesLanguage && matchesAvailability && matchesSearch
+      matchesCategory &&
+      matchesLanguage &&
+      matchesPrice &&
+      matchesAvailability &&
+      matchesSearch
     );
   });
 
@@ -313,7 +292,7 @@ export default function CareerAndWealth({
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
                 <option value="All">Career & Wealth</option>
-                <option value="Career Guidance">Career Guidance</option>
+                <option value="CAREER">Career Guidance</option>
                 <option value="Wealth & Finance">Wealth & Finance</option>
                 <option value="Business Strategy">Business Strategy</option>
               </select>
@@ -329,6 +308,7 @@ export default function CareerAndWealth({
                 <option value="Hindi">Hindi</option>
                 <option value="Gujarati">Gujarati</option>
                 <option value="Marathi">Marathi</option>
+                <option value="Sanskrit">Sanskrit</option>
               </select>
             </div>
 
@@ -371,84 +351,110 @@ export default function CareerAndWealth({
           </h2>
         </div>
 
-        <section className="consultants-grid">
-          {filteredConsultants.map((consultant) => (
-            <div key={consultant.id} className="consultant-card">
-              <div className="card-header">
-                <div className="avatar-wrapper">
-                  <img src={consultant.image} alt={consultant.name} />
-                </div>
-                <div className="header-info">
-                  <div className="name-status-row">
-                    <h3>{consultant.name}</h3>
-                    <span className={`status-pill ${consultant.statusType}`}>
-                      • {consultant.status}
-                    </span>
+        {isLoadingConsultants ? (
+          <div
+            style={{ textAlign: "center", padding: "3rem", color: "#8a7e78" }}
+          >
+            Loading career & wealth experts...
+          </div>
+        ) : filteredConsultants.length === 0 ? (
+          <div
+            style={{ textAlign: "center", padding: "3rem", color: "#8a7e78" }}
+          >
+            No career consultants found matching your criteria.
+          </div>
+        ) : (
+          <section className="consultants-grid">
+            {filteredConsultants.map((consultant) => (
+              <div key={consultant.id} className="consultant-card">
+                <div className="card-header">
+                  <div className="avatar-wrapper">
+                    <img src={consultant.image} alt={consultant.name} />
                   </div>
-                  <p className="expertise-tags">
-                    {consultant.expertise.join(" • ")}
-                  </p>
-                  <div className="meta-info-row">
-                    <span className="meta-item">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                  <div className="header-info">
+                    <div className="name-status-row">
+                      <h3>{consultant.name}</h3>
+                      <span
+                        className={`status-pill ${consultant.status_type || consultant.statusType || "available"}`}
                       >
-                        <rect
-                          x="2"
-                          y="7"
-                          width="20"
-                          height="14"
-                          rx="2"
-                          ry="2"
-                        />
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                      </svg>
-                      {consultant.experience} Experience
-                    </span>
-                    <span className="meta-item">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="2" y1="12" x2="22" y2="12" />
-                      </svg>
-                      {consultant.languages.join(", ")}
-                    </span>
-                    <span className="meta-item rating">
-                      <span className="star-icon">★</span> {consultant.rating}
-                      <span className="review-count">
-                        ({consultant.reviewsCount} reviews)
+                        • {consultant.status}
                       </span>
+                    </div>
+                    <p className="expertise-tags">
+                      {Array.isArray(consultant.expertise)
+                        ? consultant.expertise.join(" • ")
+                        : consultant.expertise}
+                    </p>
+                    <div className="meta-info-row">
+                      <span className="meta-item">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <rect
+                            x="2"
+                            y="7"
+                            width="20"
+                            height="14"
+                            rx="2"
+                            ry="2"
+                          />
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                        </svg>
+                        {consultant.experience} Experience
+                      </span>
+                      <span className="meta-item">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                        </svg>
+                        {Array.isArray(consultant.languages)
+                          ? consultant.languages.join(", ")
+                          : consultant.languages}
+                      </span>
+                      <span className="meta-item rating">
+                        <span className="star-icon">★</span> {consultant.rating}
+                        <span className="review-count">
+                          (
+                          {consultant.reviews_count ||
+                            consultant.reviewsCount ||
+                            "100+"}{" "}
+                          reviews)
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card-footer">
+                  <div className="price-tag">
+                    <span className="price-amount">
+                      ₹ {consultant.price_per_min || consultant.pricePerMin}
                     </span>
+                    <span className="price-unit">/min</span>
+                  </div>
+                  <div className="action-btns">
+                    <button className="btn-secondary-action">
+                      View Profile
+                    </button>
+                    <button className="btn-primary-action">Consult Now</button>
                   </div>
                 </div>
               </div>
-
-              <div className="card-footer">
-                <div className="price-tag">
-                  <span className="price-amount">
-                    ₹ {consultant.pricePerMin}
-                  </span>
-                  <span className="price-unit">/min</span>
-                </div>
-                <div className="action-btns">
-                  <button className="btn-secondary-action">View Profile</button>
-                  <button className="btn-primary-action">Consult Now</button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </section>
+            ))}
+          </section>
+        )}
       </div>
     </div>
   );

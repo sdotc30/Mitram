@@ -5,6 +5,7 @@ import logoImg from "../assets/logo.png";
 import kundliHeroBg from "../assets/Kundli-hero.png";
 import { useAuth } from "../AuthContext";
 import { fetchKundliData } from "../services/astrologyApi";
+import { fetchAstrologers } from "../services/astrologerService";
 
 const HERO_BG_FALLBACK = kundliHeroBg || "";
 
@@ -14,54 +15,6 @@ const LOADING_MESSAGES = [
   "Mapping planetary houses, rashis, and nakshatra padas...",
   "Synthesizing Vimshottari Dasha cycles and planetary alignments...",
   "Finalizing your celestial blueprint...",
-];
-
-const MOCK_KUNDLI_CONSULTANTS = [
-  {
-    id: 1,
-    name: "Pandit Ramachandra",
-    status: "Online Now",
-    statusType: "available",
-    expertise: ["Birth Chart Analysis", "Dasha Timing", "Vedic Remedies"],
-    category: "Kundli Reading",
-    experience: "16+ Years",
-    languages: ["English", "Hindi", "Sanskrit"],
-    rating: "4.95",
-    reviewsCount: "1,120+",
-    pricePerMin: 65,
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 2,
-    name: "Dr. Ananya Shastri",
-    status: "Online Now",
-    statusType: "available",
-    expertise: ["Navamsha Analysis", "Dosha Redressal", "Life Career Kundli"],
-    category: "Chart Interpretation",
-    experience: "14+ Years",
-    languages: ["Hindi", "English"],
-    rating: "4.90",
-    reviewsCount: "890+",
-    pricePerMin: 70,
-    image:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 3,
-    name: "Acharya Dev Vrat",
-    status: "In Session",
-    statusType: "busy",
-    expertise: ["Mangal Dosha", "Sade Sati Phase", "Planetary Yogas"],
-    category: "Dosha & Yogas",
-    experience: "20+ Years",
-    languages: ["English", "Hindi", "Gujarati"],
-    rating: "4.88",
-    reviewsCount: "1,450+",
-    pricePerMin: 85,
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=60",
-  },
 ];
 
 const VIMSHOTTARI_SEQUENCE = [
@@ -179,6 +132,10 @@ export default function KundliAndBirthChart({
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   const [chartError, setChartError] = useState(null);
 
+  // Astrologers state for live backend connection
+  const [astrologersList, setAstrologersList] = useState([]);
+  const [isLoadingAstrologers, setIsLoadingAstrologers] = useState(true);
+
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileDropdownRef = useRef(null);
 
@@ -252,6 +209,30 @@ export default function KundliAndBirthChart({
       isMounted = false;
     };
   }, [userBirthDetails]);
+
+  // Fetch verified astrologers matching category 'KUNDLI' from PostgreSQL backend
+  useEffect(() => {
+    let isMounted = true;
+    async function loadExperts() {
+      setIsLoadingAstrologers(true);
+      try {
+        const data = await fetchAstrologers("KUNDLI");
+        if (isMounted) {
+          setAstrologersList(data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load backend astrologers:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingAstrologers(false);
+        }
+      }
+    }
+    loadExperts();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -1410,7 +1391,7 @@ export default function KundliAndBirthChart({
           </button>
         </div>
 
-        {/* Astrologers Roster Section */}
+        {/* Astrologers Roster Section (Fetched live from Backend with KUNDLI code) */}
         <section
           className="consultants-section no-print"
           id="astrologers-roster"
@@ -1422,83 +1403,106 @@ export default function KundliAndBirthChart({
             </h2>
           </div>
 
-          <div className="consultants-grid">
-            {MOCK_KUNDLI_CONSULTANTS.map((consultant) => (
-              <div key={consultant.id} className="consultant-card">
-                <div className="card-header">
-                  <div className="avatar-wrapper">
-                    <img src={consultant.image} alt={consultant.name} />
-                  </div>
-                  <div className="header-info">
-                    <div className="name-status-row">
-                      <h3>{consultant.name}</h3>
-                      <span className={`status-pill ${consultant.statusType}`}>
-                        • {consultant.status}
-                      </span>
+          {isLoadingAstrologers ? (
+            <div
+              style={{ textAlign: "center", padding: "2rem", color: "#8c827a" }}
+            >
+              Loading verified astrologers...
+            </div>
+          ) : astrologersList.length === 0 ? (
+            <div
+              style={{ textAlign: "center", padding: "2rem", color: "#8c827a" }}
+            >
+              No astrologers available for this category right now.
+            </div>
+          ) : (
+            <div className="consultants-grid">
+              {astrologersList.map((consultant) => (
+                <div key={consultant.id} className="consultant-card">
+                  <div className="card-header">
+                    <div className="avatar-wrapper">
+                      <img src={consultant.image} alt={consultant.name} />
                     </div>
-                    <p className="expertise-tags">
-                      {consultant.expertise.join(" • ")}
-                    </p>
-                    <div className="meta-info-row">
-                      <span className="meta-item">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
+                    <div className="header-info">
+                      <div className="name-status-row">
+                        <h3>{consultant.name}</h3>
+                        <span
+                          className={`status-pill ${consultant.status_type || consultant.statusType || "available"}`}
                         >
-                          <rect
-                            x="2"
-                            y="7"
-                            width="20"
+                          • {consultant.status}
+                        </span>
+                      </div>
+                      <p className="expertise-tags">
+                        {Array.isArray(consultant.expertise)
+                          ? consultant.expertise.join(" • ")
+                          : consultant.expertise}
+                      </p>
+                      <div className="meta-info-row">
+                        <span className="meta-item">
+                          <svg
+                            width="14"
                             height="14"
-                            rx="2"
-                            ry="2"
-                          />
-                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                        </svg>
-                        {consultant.experience}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <rect
+                              x="2"
+                              y="7"
+                              width="20"
+                              height="14"
+                              rx="2"
+                              ry="2"
+                            />
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                          </svg>
+                          {consultant.experience}
+                        </span>
+                        <span className="meta-item">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="2" y1="12" x2="22" y2="12" />
+                          </svg>
+                          {Array.isArray(consultant.languages)
+                            ? consultant.languages.join(", ")
+                            : consultant.languages}
+                        </span>
+                        <span className="meta-item rating">
+                          <span className="star-icon">★</span>{" "}
+                          {consultant.rating}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card-footer">
+                    <div className="price-tag">
+                      <span className="price-amount">
+                        ₹ {consultant.price_per_min || consultant.pricePerMin}
                       </span>
-                      <span className="meta-item">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="2" y1="12" x2="22" y2="12" />
-                        </svg>
-                        {consultant.languages.join(", ")}
-                      </span>
-                      <span className="meta-item rating">
-                        <span className="star-icon">★</span> {consultant.rating}
-                      </span>
+                      <span className="price-unit">/min</span>
+                    </div>
+                    <div className="action-btns">
+                      <button className="btn-secondary-action">
+                        View Profile
+                      </button>
+                      <button className="btn-primary-action">
+                        Consult Now
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                <div className="card-footer">
-                  <div className="price-tag">
-                    <span className="price-amount">
-                      ₹ {consultant.pricePerMin}
-                    </span>
-                    <span className="price-unit">/min</span>
-                  </div>
-                  <div className="action-btns">
-                    <button className="btn-secondary-action">
-                      View Profile
-                    </button>
-                    <button className="btn-primary-action">Consult Now</button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>

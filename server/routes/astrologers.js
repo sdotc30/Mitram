@@ -1,67 +1,89 @@
 const express = require("express");
 const router = express.Router();
+const pool = require("../config/db");
 
-// Mock database data (replace with your MongoDB/PostgreSQL model query if using a DB)
-const astrologersData = [
-  {
-    id: "astro-1",
-    name: "Dr. Aravind Shastri",
-    title: "Vedic Astrology & Relationship Expert",
-    category: "love",
-    rating: 4.9,
-    reviews: 320,
-    price: 499,
-    status: "Available Now",
-    tags: ["Love & Compatibility", "Vedic Astrology", "Kundli Matching"],
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
-  },
-  {
-    id: "astro-2",
-    name: "Meera Kapoor",
-    title: "Tarot Card Reader & Soulmate Guide",
-    category: "love",
-    rating: 4.8,
-    reviews: 215,
-    price: 399,
-    status: "Available Now",
-    tags: ["Tarot Reading", "Relationship Sync", "Emotional Healing"],
-    image:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80",
-  },
-  {
-    id: "astro-3",
-    name: "Acharya Vikram",
-    title: "Numerologist & Synastry Specialist",
-    category: "love",
-    rating: 4.95,
-    reviews: 450,
-    price: 599,
-    status: "Busy",
-    tags: ["Numerology", "Synastry", "Marriage Compatibility"],
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80",
-  },
-];
+// GET /api/astrologers - Fetch all astrologers or filter by category code (e.g. ?category=KUNDLI)[cite: 4]
+router.get("/", async (req, res) => {
+  const { category } = req.query;
 
-// GET /api/astrologers?category=love
-router.get("/astrologers", (req, res) => {
   try {
-    const { category } = req.query;
-    let results = astrologersData;
+    let query = "SELECT * FROM astrologers";
+    let values = [];
 
     if (category) {
-      results = results.filter(
-        (astro) => astro.category.toLowerCase() === category.toLowerCase(),
-      );
+      // Checks if the requested category code exists inside the astrologer's categories array[cite: 4]
+      query += " WHERE $1 = ANY(categories)";
+      values.push(category.toUpperCase());
     }
 
-    return res.status(200).json(results);
-  } catch (error) {
-    console.error("Error fetching astrologers:", error);
-    return res
+    query += " ORDER BY rating DESC";
+
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching astrologers from database:", err);
+    res.status(500).json({ error: "Server error while fetching astrologers" });
+  }
+});
+
+// GET /api/astrologers/:id - Fetch individual astrologer profile with mapped specialties and reviews
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query("SELECT * FROM astrologers WHERE id = $1", [
+      id,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Astrologer not found" });
+    }
+
+    const astrologer = result.rows[0];
+
+    // Map expertise array to specialties format for UI
+    const specialties = astrologer.expertise
+      ? astrologer.expertise.map((exp, idx) => ({
+          id: idx + 1,
+          title: exp,
+          description: `Specialized guidance and astrological remedies for ${exp.toLowerCase()}.`,
+        }))
+      : [];
+
+    res.json({
+      ...astrologer,
+      bio:
+        astrologer.bio ||
+        `Practicing Vedic astrologer with over ${astrologer.experience || "8+"} years of experience, helping individuals find clarity and direction in their lives through authentic Vedic wisdom.`,
+      specialties,
+      reviews: [
+        {
+          id: 1,
+          user_name: "Ananya R.",
+          rating: 5,
+          comment:
+            "The session was very insightful. I got the clarity I needed for my career path. Highly recommended!",
+          reply_text: `Thank you Ananya. Wishing you the very best on your journey! ✨`,
+          helpful_count: 12,
+          created_at: "2 days ago",
+        },
+        {
+          id: 2,
+          user_name: "Rohit S.",
+          rating: 4,
+          comment:
+            "Very calm and supportive approach. Guidance really helped me during a difficult phase.",
+          reply_text: `Glad to know it was helpful, Rohit. Stay positive and keep moving forward.`,
+          helpful_count: 8,
+          created_at: "1 week ago",
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("Error fetching individual astrologer:", err);
+    res
       .status(500)
-      .json({ error: "Failed to retrieve astrologers data" });
+      .json({ error: "Server error while fetching astrologer profile" });
   }
 });
 
