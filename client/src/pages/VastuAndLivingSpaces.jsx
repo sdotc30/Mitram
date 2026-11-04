@@ -11,6 +11,7 @@ export default function VastuAndLivingSpaces({
   onOpenAuth,
   onOpenSidebar,
   userProfile,
+  onViewAstrologerProfile,
 }) {
   const { currentUser, logout } = useAuth();
 
@@ -130,7 +131,11 @@ export default function VastuAndLivingSpaces({
               </svg>
             </button>
 
-            <div className="header-logo-container" onClick={onBack}>
+            <div
+              className="header-logo-container"
+              onClick={onBack}
+              style={{ cursor: "pointer" }}
+            >
               <img
                 src={logoImg}
                 alt="Mitram Logo"
@@ -231,7 +236,7 @@ export default function VastuAndLivingSpaces({
       </div>
 
       {/* Main Content Body */}
-      <div className="vastu-body-content">
+      <div className="vastu-body-content" id="consultations">
         {/* Search & Filter Section */}
         <section className="filter-container">
           <div className="search-bar">
@@ -293,7 +298,14 @@ export default function VastuAndLivingSpaces({
           <section className="consultants-grid">
             {filteredConsultants.map((consultant) => (
               <div key={consultant.id} className="consultant-card">
-                <div className="card-header">
+                <div
+                  className="card-header"
+                  onClick={() =>
+                    onViewAstrologerProfile &&
+                    onViewAstrologerProfile(consultant.id)
+                  }
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="avatar-wrapper">
                     <img src={consultant.image} alt={consultant.name} />
                   </div>
@@ -301,7 +313,11 @@ export default function VastuAndLivingSpaces({
                     <div className="name-status-row">
                       <h3>{consultant.name}</h3>
                       <span
-                        className={`status-pill ${consultant.status_type || consultant.statusType || "available"}`}
+                        className={`status-pill ${
+                          consultant.status_type ||
+                          consultant.statusType ||
+                          "available"
+                        }`}
                       >
                         • {consultant.status}
                       </span>
@@ -371,10 +387,15 @@ export default function VastuAndLivingSpaces({
                     <span className="price-unit">/min</span>
                   </div>
                   <div className="action-btns">
-                    <button className="btn-secondary-action">
-                      View Profile
+                    <button
+                      className="btn-primary-action"
+                      onClick={() =>
+                        onViewAstrologerProfile &&
+                        onViewAstrologerProfile(consultant.id)
+                      }
+                    >
+                      Consult Now
                     </button>
-                    <button className="btn-primary-action">Book Session</button>
                   </div>
                 </div>
               </div>

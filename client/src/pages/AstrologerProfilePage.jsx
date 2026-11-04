@@ -38,23 +38,33 @@ export default function AstrologerProfilePage({
 
   useEffect(() => {
     let isMounted = true;
-    async function fetchAstrologerDetails() {
+    async function fetchAstrologerAndReviews() {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/astrologers/${astrologerId}`,
-        );
-        if (!res.ok) {
+        const [astroRes, revRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/astrologers/${astrologerId}`),
+          fetch(
+            `http://localhost:5000/api/astrologers/${astrologerId}/reviews`,
+          ),
+        ]);
+
+        if (!astroRes.ok) {
           throw new Error(`Astrologer not found (ID: ${astrologerId})`);
         }
-        const data = await res.json();
+
+        const astroData = await astroRes.json();
+        let reviewsData = [];
+        if (revRes.ok) {
+          reviewsData = await revRes.json();
+        }
+
         if (isMounted) {
-          setAstrologer(data);
-          setReviewsList(data.reviews || []);
+          setAstrologer(astroData);
+          setReviewsList(reviewsData);
         }
       } catch (err) {
-        console.error("Error loading astrologer:", err);
+        console.error("Error loading astrologer or reviews:", err);
         if (isMounted)
           setError("Could not find astrologer details in the database.");
       } finally {
@@ -63,7 +73,7 @@ export default function AstrologerProfilePage({
     }
 
     if (astrologerId) {
-      fetchAstrologerDetails();
+      fetchAstrologerAndReviews();
     }
     return () => {
       isMounted = false;
@@ -139,32 +149,20 @@ export default function AstrologerProfilePage({
       if (res.ok) {
         const savedReview = await res.json();
         setReviewsList((prev) => [savedReview, ...prev]);
+        setNewComment("");
+        setNewRating(5);
+        setShowAddReviewModal(false);
       } else {
-        const fallbackRev = {
-          id: Date.now(),
-          ...reviewPayload,
-          helpful_count: 0,
-          created_at: "Just now",
-        };
-        setReviewsList((prev) => [fallbackRev, ...prev]);
+        const errJson = await res.json().catch(() => ({}));
+        alert(`Failed to save review: ${errJson.error || res.statusText}`);
       }
     } catch (err) {
-      console.error(
-        "Failed to post review to backend, applying local fallback:",
-        err,
+      console.error("Network error saving review:", err);
+      alert(
+        "Network error: Could not reach backend server to save your review.",
       );
-      const fallbackRev = {
-        id: Date.now(),
-        ...reviewPayload,
-        helpful_count: 0,
-        created_at: "Just now",
-      };
-      setReviewsList((prev) => [fallbackRev, ...prev]);
     } finally {
       setIsSubmittingReview(false);
-      setNewComment("");
-      setNewRating(5);
-      setShowAddReviewModal(false);
     }
   };
 
@@ -174,14 +172,15 @@ export default function AstrologerProfilePage({
     return b.id - a.id;
   });
 
-  const totalRevCount = reviewsList.length;
+  // Calculate live reviews count and rating
+  const totalWrittenReviews = reviewsList.length;
   const sumRatings = reviewsList.reduce(
     (acc, curr) => acc + Number(curr.rating),
     0,
   );
   const liveAverageRating =
-    totalRevCount > 0
-      ? (sumRatings / totalRevCount).toFixed(1)
+    totalWrittenReviews > 0
+      ? (sumRatings / totalWrittenReviews).toFixed(1)
       : astrologer.rating
         ? Number(astrologer.rating).toFixed(1)
         : "5.0";
@@ -193,6 +192,14 @@ export default function AstrologerProfilePage({
       ratingCounts[star]++;
     }
   });
+
+  // Keep consultations derived strictly from astrologer.reviews_count without double pluses
+  const baseConsultationsRaw = astrologer.reviews_count
+    ? String(astrologer.reviews_count).trim()
+    : "100+";
+  const displayConsultations = baseConsultationsRaw.endsWith("+")
+    ? baseConsultationsRaw
+    : `${baseConsultationsRaw}+`;
 
   const baseRate = Number(astrologer.price_per_min) || 25;
   const chatPackagePrice = baseRate * 45;
@@ -313,9 +320,7 @@ export default function AstrologerProfilePage({
 
                 <div className="stat-pill">
                   <div>
-                    <strong>
-                      {astrologer.reviews_count || `${totalRevCount}+`}
-                    </strong>
+                    <strong>{displayConsultations}</strong>
                     <span>Consultations</span>
                   </div>
                 </div>
@@ -323,10 +328,7 @@ export default function AstrologerProfilePage({
                 <div className="stat-pill">
                   <div>
                     <strong>{liveAverageRating}</strong>
-                    <span>
-                      ({totalRevCount || astrologer.reviews_count || "0"}{" "}
-                      reviews)
-                    </span>
+                    <span>({totalWrittenReviews} reviews)</span>
                   </div>
                 </div>
               </div>
@@ -400,7 +402,7 @@ export default function AstrologerProfilePage({
           >
             <div className="reviews-header-bar">
               <div>
-                <h2>Client Reviews ({totalRevCount})</h2>
+                <h2>Client Reviews ({totalWrittenReviews})</h2>
               </div>
 
               <div className="reviews-actions-top">
@@ -425,7 +427,8 @@ export default function AstrologerProfilePage({
             <div className="reviews-list">
               {sortedReviews.length === 0 ? (
                 <p className="no-reviews-notice">
-                  No reviews yet. Be the first to consult and leave a review!
+                  No client reviews yet. Be the first to consult and leave a
+                  review!
                 </p>
               ) : (
                 sortedReviews.map((rev) => (
@@ -530,24 +533,24 @@ export default function AstrologerProfilePage({
               <h2>Ratings &amp; Reviews</h2>
             </div>
             <p className="sub-caption">
-              Based on {totalRevCount || astrologer.reviews_count || 0} reviews
+              {totalWrittenReviews > 0
+                ? `Based on ${totalWrittenReviews} client reviews`
+                : `Based on verified consultations`}
             </p>
 
             <div className="rating-score-row">
               <div className="big-score">
                 <span>{liveAverageRating}</span>
                 <div className="score-stars">★★★★★</div>
-                <small>
-                  {totalRevCount || astrologer.reviews_count || 0} reviews
-                </small>
+                <small>{totalWrittenReviews} reviews</small>
               </div>
 
               <div className="score-bars">
                 {[5, 4, 3, 2, 1].map((star) => {
                   const count = ratingCounts[star] || 0;
                   const pct =
-                    totalRevCount > 0
-                      ? Math.round((count / totalRevCount) * 100)
+                    totalWrittenReviews > 0
+                      ? Math.round((count / totalWrittenReviews) * 100)
                       : 0;
                   return (
                     <div key={star} className="bar-row">
@@ -566,7 +569,7 @@ export default function AstrologerProfilePage({
             </div>
           </div>
 
-          {/* WHY CONSULT CARD - Exact original copy with dynamic astrologer name */}
+          {/* WHY CONSULT CARD */}
           <div
             className="why-consult-card"
             style={{ backgroundImage: `url(${whyConsultBg})` }}

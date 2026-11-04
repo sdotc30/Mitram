@@ -9,7 +9,7 @@ const registerTickerSockets = require("./sockets/tickerSocket");
 
 const directoryRoutes = require("./routes/directoryRoutes");
 const astrologerRoutes = require("./routes/astrologers");
-const productRoutes = require("./routes/products"); // Product Router
+const productRoutes = require("./routes/products");
 
 const app = express();
 const server = http.createServer(app);
@@ -91,6 +91,11 @@ app.post("/api/astrologers/:id/reviews", async (req, res) => {
   try {
     const { id } = req.params;
     const { user_name, rating, comment } = req.body;
+    const astroIdInt = parseInt(id, 10);
+
+    if (isNaN(astroIdInt)) {
+      return res.status(400).json({ error: "Invalid astrologer ID" });
+    }
 
     if (!user_name || !rating || !comment) {
       return res.status(400).json({ error: "Missing required review fields" });
@@ -100,7 +105,7 @@ app.post("/api/astrologers/:id/reviews", async (req, res) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reviews (
         id SERIAL PRIMARY KEY,
-        astrologer_id INT REFERENCES astrologers(id) ON DELETE CASCADE,
+        astrologer_id INT,
         user_name VARCHAR(255) NOT NULL,
         rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
         comment TEXT NOT NULL,
@@ -115,22 +120,33 @@ app.post("/api/astrologers/:id/reviews", async (req, res) => {
        VALUES ($1, $2, $3, $4, 0, NOW())
        RETURNING id, astrologer_id, user_name, rating, comment, helpful_count, 
                  TO_CHAR(created_at, 'DD Mon YYYY') as created_at`,
-      [id, user_name, rating, comment],
+      [astroIdInt, user_name, parseInt(rating, 10), comment],
     );
 
-    // Sync rating and review count directly in the astrologers table
-    await pool.query(
-      `UPDATE astrologers 
-       SET rating = (SELECT ROUND(AVG(rating)::numeric, 1) FROM reviews WHERE astrologer_id = $1),
-           reviews_count = (SELECT COUNT(*)::text FROM reviews WHERE astrologer_id = $1)
-       WHERE id = $1`,
-      [id],
-    );
+    // Update rating without wiping out lifetime consultation/reviews_count
+    try {
+      await pool.query(
+        `UPDATE astrologers 
+         SET rating = (SELECT ROUND(AVG(rating)::numeric, 1) FROM reviews WHERE astrologer_id = $1)
+         WHERE id = $1`,
+        [astroIdInt],
+      );
+    } catch (syncErr) {
+      console.warn(
+        "[Reviews] Note: Could not update average rating:",
+        syncErr.message,
+      );
+    }
 
+    console.log(
+      `[Reviews] Saved review #${insertResult.rows[0].id} for astrologer ${astroIdInt}`,
+    );
     res.status(201).json(insertResult.rows[0]);
   } catch (err) {
     console.error("Error creating review:", err);
-    res.status(500).json({ error: "Failed to save review" });
+    res
+      .status(500)
+      .json({ error: "Failed to save review", details: err.message });
   }
 });
 
@@ -138,18 +154,39 @@ app.post("/api/astrologers/:id/reviews", async (req, res) => {
 app.get("/api/astrologers/:id/reviews", async (req, res) => {
   try {
     const { id } = req.params;
+    const astroIdInt = parseInt(id, 10);
+
+    if (isNaN(astroIdInt)) {
+      return res.status(400).json({ error: "Invalid astrologer ID" });
+    }
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        astrologer_id INT,
+        user_name VARCHAR(255) NOT NULL,
+        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT NOT NULL,
+        helpful_count INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     const result = await pool.query(
       `SELECT id, astrologer_id, user_name, rating, comment, helpful_count, 
               TO_CHAR(created_at, 'DD Mon YYYY') as created_at 
        FROM reviews 
        WHERE astrologer_id = $1 
        ORDER BY id DESC`,
-      [id],
+      [astroIdInt],
     );
+
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching reviews:", err);
-    res.status(500).json({ error: "Failed to fetch reviews" });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch reviews", details: err.message });
   }
 });
 

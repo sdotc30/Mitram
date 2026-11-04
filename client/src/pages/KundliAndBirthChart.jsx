@@ -122,6 +122,7 @@ export default function KundliAndBirthChart({
   onOpenSidebar,
   userProfile,
   setIsDetailsModalOpen,
+  onViewAstrologerProfile,
 }) {
   const { currentUser, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("chart");
@@ -1391,7 +1392,7 @@ export default function KundliAndBirthChart({
           </button>
         </div>
 
-        {/* Astrologers Roster Section (Fetched live from Backend with KUNDLI code) */}
+        {/* Astrologers Roster Section */}
         <section
           className="consultants-section no-print"
           id="astrologers-roster"
@@ -1419,7 +1420,14 @@ export default function KundliAndBirthChart({
             <div className="consultants-grid">
               {astrologersList.map((consultant) => (
                 <div key={consultant.id} className="consultant-card">
-                  <div className="card-header">
+                  <div
+                    className="card-header"
+                    onClick={() =>
+                      onViewAstrologerProfile &&
+                      onViewAstrologerProfile(consultant.id)
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="avatar-wrapper">
                       <img src={consultant.image} alt={consultant.name} />
                     </div>
@@ -1427,7 +1435,11 @@ export default function KundliAndBirthChart({
                       <div className="name-status-row">
                         <h3>{consultant.name}</h3>
                         <span
-                          className={`status-pill ${consultant.status_type || consultant.statusType || "available"}`}
+                          className={`status-pill ${
+                            consultant.status_type ||
+                            consultant.statusType ||
+                            "available"
+                          }`}
                         >
                           • {consultant.status}
                         </span>
@@ -1491,10 +1503,13 @@ export default function KundliAndBirthChart({
                       <span className="price-unit">/min</span>
                     </div>
                     <div className="action-btns">
-                      <button className="btn-secondary-action">
-                        View Profile
-                      </button>
-                      <button className="btn-primary-action">
+                      <button
+                        className="btn-primary-action"
+                        onClick={() =>
+                          onViewAstrologerProfile &&
+                          onViewAstrologerProfile(consultant.id)
+                        }
+                      >
                         Consult Now
                       </button>
                     </div>

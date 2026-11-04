@@ -11,6 +11,7 @@ export default function JudgmentFreeSpace({
   onOpenAuth,
   onOpenSidebar,
   userProfile,
+  onViewAstrologerProfile,
 }) {
   const { currentUser, logout } = useAuth();
 
@@ -130,7 +131,11 @@ export default function JudgmentFreeSpace({
               </svg>
             </button>
 
-            <div className="header-logo-container" onClick={onBack}>
+            <div
+              className="header-logo-container"
+              onClick={onBack}
+              style={{ cursor: "pointer" }}
+            >
               <img
                 src={logoImg}
                 alt="Mitram Logo"
@@ -232,9 +237,9 @@ export default function JudgmentFreeSpace({
       </div>
 
       {/* Main Content Body */}
-      <div className="jfz-body-content">
+      <div className="jfz-body-content" id="listeners">
         {/* Search & Filter Container */}
-        <section className="filter-container" id="listeners">
+        <section className="filter-container">
           <div className="search-bar">
             <input
               type="text"
@@ -294,7 +299,14 @@ export default function JudgmentFreeSpace({
           <section className="consultants-grid">
             {filteredListeners.map((listener) => (
               <div key={listener.id} className="consultant-card">
-                <div className="card-header">
+                <div
+                  className="card-header"
+                  onClick={() =>
+                    onViewAstrologerProfile &&
+                    onViewAstrologerProfile(listener.id)
+                  }
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="avatar-wrapper">
                     <img src={listener.image} alt={listener.name} />
                   </div>
@@ -302,7 +314,11 @@ export default function JudgmentFreeSpace({
                     <div className="name-status-row">
                       <h3>{listener.name}</h3>
                       <span
-                        className={`status-pill ${listener.status_type || listener.statusType || "available"}`}
+                        className={`status-pill ${
+                          listener.status_type ||
+                          listener.statusType ||
+                          "available"
+                        }`}
                       >
                         • {listener.status}
                       </span>
@@ -372,10 +388,15 @@ export default function JudgmentFreeSpace({
                     <span className="price-unit">/min</span>
                   </div>
                   <div className="action-btns">
-                    <button className="btn-secondary-action">
-                      View Profile
+                    <button
+                      className="btn-primary-action"
+                      onClick={() =>
+                        onViewAstrologerProfile &&
+                        onViewAstrologerProfile(listener.id)
+                      }
+                    >
+                      Connect Now
                     </button>
-                    <button className="btn-primary-action">Connect Now</button>
                   </div>
                 </div>
               </div>
